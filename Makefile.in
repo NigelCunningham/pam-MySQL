@@ -106,7 +106,7 @@ CONFIG_CLEAN_FILES =  pam_mysql.spec
 LTLIBRARIES =  $(lib_LTLIBRARIES)
 
 
-DEFS = @DEFS@ -I. -I$(srcdir) -I.
+DEFS = @DEFS@ -I. -I$(srcdir) -I. -DHAVE_OPENSSL
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
