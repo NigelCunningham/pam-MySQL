@@ -1,0 +1,206 @@
+2006-01-09  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: PR #1325395 - add "disconnect_every_op" option that forces
+	pam_mysql to disconnect from the database every operation.
+	(pam_sm_chauthtok): PR #1338667 - stop using getuid() and use geteuid()
+	instead. PR #1338672 - allow root to change the passwords of other users
+	without their old password.
+	* acinclude.m4: check PAM_AUTHTOK_RECOVERY_ERR availability, for
+	Linux PAM's error.
+	* README: note about disconnect_every_op.
+
+2005-09-23  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: (pam_mysql_parse_args): change option parsing behaviour
+	so "=" following each option name is not needed.
+	(pam_sm_authenticate): fix try_first_pass behaviour. fix behaviour so that
+	the password obtained in a conversation is always stored with
+	pam_set_item().
+
+2005-09-21  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: add "logrhostcolumn" option.
+	#define PAM_SM_* so that pam_mysql.c can be linked statically to libpam.
+	static'ify some functions.  s/pam_permit_modstruct/pam_mysql_modstruct/.
+	(pam_mysql_stream_skip_spn): fix invalid assumption of an uninitialised
+	variable.
+	(pam_mysql_get_host_info): new function.
+	(pam_mysql_destroy_ctx): add missing xfree(ctx->config_file) to avoid
+	leak.
+	* configure.in: checks for netdb functions / IPv6 availability.
+	* acinclude.m4: ditto.
+	* README: add description about logrhostcolumn.
+	* NEWS: note about logrhostcolumn.
+
+2005-09-20  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: prevent blocks obtained from pam_get_item() from being
+	freed.
+	(pam_mysql_check_passwd): do not escape the content of the "where" option.
+	Fixes PR #1261484.
+	(pam_mysql_sql_log): remove weird codes. Fixes PR #1256243.
+
+2005-09-18  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* README: add a note about the issue regarding official MySQL binary
+	packages.
+	* NEWS: prepare for the release.
+	* pam_mysql.c: (pam_mysql_format_string): change column name handling
+	to allow an expression for every XXXcolumn parameter.
+
+2005-08-01  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* acinclude.m4: (PAM_MYSQL_CHECK_LIBMYSQLCLIENT): remove redundant
+	eval. Will fix PR #1245188.
+
+2005-06-24  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: implement use_first_pass and try_first_pass options
+	to follow the convention. make debug option an alias for verbose.
+	(pam_sm_authenticate): return authentication token to the PAM
+	implementation (by pam_set_item()).
+	(pam_sm_chauthtok): return authentication token to the PAM implementation.
+	(pam_mysql_check_passwd): don't update password column if crypt=md5
+	and non-crypt md5 is not implemented. use statically allocated buffer
+	for make_scrambled_password().
+	* README: note about debug, use_first_pass and try_first_pass.
+	* NEWS: use_first_pass and try_first_pass.
+
+2005-06-23  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: (pam_mysql_check_passwd): fix buffer overflow spotted in
+	verification of SHA1-encrypted password.
+
+2005-06-19  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: add use_323_passwd option for compatibility with
+	the old MySQL PASSWORD() implementation (inspired by Daniel Renaud.
+	Thanks.)
+	(pam_sm_acct_mgmt): add a missing piece of code to the account management
+	callback. I don't know why I didn't notice this before the last release.
+	* acinclude.m4: (PAM_MYSQL_CHECK_LIBMYSQLCLIENT) ditto.
+	Fix compile failure on Solaris when --with-openssl is specified to
+	configure.
+	* .cvsignore: add pam_mysql.spec
+	* README: note about statcolumn / use_323_passwd.
+
+2005-06-17  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* acinclude.m4: old mysql_config doesn"t accept --include option.
+	this resulted in sed errors in config.status. Reported by Worlfgang
+	Erlenkoetter. Thanks.
+	* configure.in: a hyphen is not allowed for the "Version" section in
+	a spec file.
+	* .cvsignore: add .orig and .rej.
+	* pam_mysql.spec.in: require OpenSSL by default.
+
+2005-06-16  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* acinclude.m4: fix library detection code: s/shrext/shrext_cmds/. use
+	$libext instead of ".a" for library suffices.
+
+2005-06-15  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* README: fix description about config_file. add missing description
+	for option "MD5". note about the GPL issue.
+	* pam_mysql.c: SHA1 support (requires OpenSSL).
+	* NEWS: entry for 0.7-pre2.
+	* configure.in: add pam_mysql.spec to AC_OUTPUT. Noticed by Fredrik
+	Rambris (boost at users dot sourceforge dot net). Thanks.
+	* Makefile.am: add pam_mysql.spec and pkg.m4 to EXTRA_DIST. Notices by
+	Fredrik Rambris (boost at users dot sourceforge dot net).
+	* COPYING: replace by GPL terms, were accidentially LGPL ones.
+
+2005-06-13  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: s/crypt/crypt_type/ due to possible namespace pollution.
+	* acinclude.m4: (PAM_MYSQL_CHECK_LIBMYSQLCLIENT) check mysql_config
+	availability for more accurate detection.
+	* README: misc. documentation fixes.
+	* INSTALL: ditto.
+
+2005-06-12  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c:
+	- remove redundant #include <pam_misc.h> that caused compatibility
+	  problem.
+	- #define PAM_EXPORT / LOG_AUTHPRIV if undefined.
+	- #include <pam_appl.h> beforehand of #include <pam_module.h> as Sun's
+	  implementation doesn't really take inclusion order into account.
+	- include crypt.h if available.
+	(pam_sm_open_session): log session state, to fix PR# 1047213.
+	(pam_sm_close_session): ditto.
+	(pam_sm_authenticate): log authentication failure as well.
+	* NEWS: note about above.
+	* configure.in: add /usr/lib/security and /usr/lib/pam to module
+	search path.
+	* acinclude.m4:
+	(PAM_MYSQL_CHECK_PAM): remove redundant checks for pam_misc.h.
+	(PAM_MYSQL_CHECK_PROTOS): add for compatibility.
+
+2005-06-07  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: initialize statcolumn to "1" (for the sake of
+	backwards compatibility) on start and free on exit. This fixes
+	the bug reported by Deniss from Latvia. Thanks.
+	* configure.in: include pkg.m4 (from pkgconfig 0.17.2 which is covered
+	by GPL) to deal with the case pkg-config devel package is not installed.
+	* pkg.m4: added.
+	* autogen.sh: run libtoolize prior to aclocal.
+	* README: remove note about default values, as those ones no longer
+	exist for string parameters. added notes for undocumented options (verbose,
+	config_file).
+	* NEWS: updates for expected releases.
+
+2005-03-28  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* pam_mysql.c: uncapitalize log message. fix log level in
+	pam_mysql_set_option(). add missing PAM_MYSQL_LOG_PREFIX to
+	syslog() params. add support for nss-mysql style external configuration
+	file.
+	* acinclude.m4: add PAM_MYSQL_CHECK_DEFINES macro.
+	* configure.in: add checks for ELOOP and EOVERFLOW constants, which are
+	used in pam_mysql_stream_open().
+	* Makefile.am: add install-sh, missing and mkinstalldirs to EXTRA_DISTS.
+
+2005-03-27  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* README: add CVS tags and note about unix socket / non-default port
+	number support.
+	* INSTALL: add CVS tags.
+	* pam_mysql.c: add CVS tags. fix typo.
+	* NEWS: reformat and add entry for 0.6.
+
+2005-03-23  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* README: add a notice about md5() crypt.
+
+2005-03-22  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* COPYING: this should have been there..
+	* pam_mysql.c: add missing license terms.
+	* Makefile.am: ditto.
+	* ChangeLog: fix indentation.
+
+2005-03-12  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* acinclude.m4: fix PAM_MYSQL_CHECK_OPENSSL to correctly
+	check the library availability with the appropriate
+	linker options.
+
+2005-03-11  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
+
+	* acinclude.m4: add new macros -- PAM_MYSQL_CHECK_MD5_HEADERS,
+	PAM_MYSQL_CHECK_CYRUS_SASL_V1, PAM_MYSQL_CHECK_CYRUS_SASL_V2
+	to deal with the "bogus" md5.h issue.
+	* configure.in: add two new options --with-cyrus-sasl /
+	--with-cyrus-sasl2. fix OpenSSL detection. bump package version.
+	* pam_mysql.c: conditionally include <md5global.h> if Cyrus SASL
+	is available and enabled by --with-cyrus-sasl or --with-cyrus-sasl2.
+	* NEWS: renamed from Changelog
+	* ChangeLog: genuine ChangeLog :)
+	* INSTALL: detailed installation instruction in there.
+	* README: note about forking.
+	* Makefile.am: correct typos, synchronize EXTRA_DISTS with new
+	additions.
+	* pam_mysql.spec.in: synchronization against new additions.

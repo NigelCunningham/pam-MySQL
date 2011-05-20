@@ -1,0 +1,89 @@
+$Id: INSTALL,v 1.3 2005/06/13 10:21:55 moriyoshi Exp $
+
+Typical:
+
+1. Run "configure" script. The following parameters are accepted.
+
+    --with-pam=[PAM_INSTALLATION_PREFIX]
+
+        Specifies where the PAM headers required to build
+        the package are installed. This may help when you are
+        building a system in a different root. This can be
+        omitted to turn on auto-detection.
+
+    --with-pam-mods-dir=[MODULE_DIRECTORY]
+
+        Specifies where to install the product
+        (pam_mysql.so). This can be omitted also.
+
+    --with-mysql=[MYSQL_INSTALLATION_PREFIX]
+
+        Specifies where the required MySQL headers and
+        libraries are installed. If not given, configure search
+        to find them amongst the hard-coded prefixes in the
+        following order:
+
+        . /usr
+        . /usr/local
+        . /usr/mysql
+        . /opt/mysql
+
+    --with-openssl=[OPENSSL_INSTALLATION_PREFIX]
+
+        Specifies where the OpenSSL headers and libraries are
+        installed. If the option is supplied but no prefix is
+        explicitly given, configure tries to search them amongst
+        the hard-coded prefixes in the following order:
+
+        . /usr
+        . /usr/local
+        . /opt/openssl
+        . /usr/ssl
+        . /usr/local/ssl
+
+    --with-cyrus-sasl=[CYRUS_SASL_INSTALLATION_PREFIX]
+    --with-cyrus-sasl2=[CYRUS_SASL2_INSTALLATION_PREFIX]
+
+        Specifies where the Cyrus SASL headers and libraries, which
+        will be used for MD5 calculation facility, are installed.
+        If the option is supplied but no prefix is explicitly given,
+        configure tries to search them amongst the hard-coded prefixes
+        in the following order:
+
+        . /usr
+        . /usr/local
+        . /opt/cyrus-sasl
+
+        Note that these two options cannot be specified together, and
+        it is discouraged to use this feature in order to avoid cross
+        dependency and symbol conflict as PAM may be called from within
+        a SASL client library.
+
+2. make install
+
+3. Make proper changes to an intended configuration file in /etc/pam.d/
+   or /etc/pam.conf.
+
+Via RPM commands:
+
+1. Copy the source archive (.tar.gz / .tar.bz2) to the "SOURCES" directory
+   within the system dependent RPM build directory.
+   That is typically /usr/src/redhat in Red Hat / Fedora Core distros.
+
+2. Copy the spec file (pam_mysql.spec), that has been generated during
+   configuration to the "SPECS" directory, that is also found in the same
+   RPM build directory as explained in the previous step.
+
+3. Chdir to the SPECS directory
+
+4. Run rpmbuild.
+
+   $ rpmbuild -ba pam_mysql.spec
+
+5. Install the binary-rpm that was produced in the "RPMS" directory, ditto.
+
+  (via ordinary make install)
+
+6. Make proper changes to an intended configuration file in /etc/pam.d/
+   or /etc/pam.conf.
+

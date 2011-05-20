@@ -1,0 +1,360 @@
+pam_mysql - A PAM authentication module against MySQL database.
+$Id: README,v 1.8.2.9 2006/01/09 10:35:59 moriyoshi Exp $
+
+Introduction
+------------
+This is a successor of the "old" pam_mysql module, which comes with
+a more stable, secure and robust implementation.
+
+Prerequisites
+-------------
+To try this module, you need the following stuff:
+ - A *NIX (or similar) system, in which PAM facility is set up and working
+   either system-wide or in a chroot jail.
+ - A MySQL server, up and running.
+
+Installation instruction
+------------------------
+See INSTALL file for detail.
+
+An example of the configuration file:
+---------------------------------------------------------------
+auth       optional     pam_mysql.so user=root passwd=password
+account    required     pam_mysql.so user=root passwd=password
+---------------------------------------------------------------
+
+Available options
+-----------------
+The module options are listed below with default in ()s:
+
+verbose (0)
+
+    If set to 1, produces logs with detailed messages that describes what
+    PAM-MySQL is doing. May be useful for debugging.
+
+debug
+
+    An alias for the verbose option. This is added in 0.7pre2.
+
+user
+
+    The user name used to open the specified MySQL database.
+
+passwd
+
+    The password used to open the specified MySQL database.
+
+host
+
+    The host name or the absolute path to the unix socket where the
+	MySQL server is listening.  The following formats are accepted:
+
+    1. absolute path to the unix socket (e.g. "/tmp/mysql.sock")
+	2. host name (e.g. "somewhere.example.com")
+	3. host name + port number (e.g. "somewhere.example.com:3306")
+
+db
+
+    The name of the database that contains a user-password table.
+
+table
+
+    The name of table that maps unique login names to the passwords.
+    This can be a combination of tables with full JOIN syntax if you
+    need more control.  For example:
+
+        [table=Host LEFT JOIN HostUser ON HostUser.host_id=Host.id \
+                    LEFT JOIN User ON HostUser.user_id=User.id]
+
+update_table
+
+    The name of the table used for password alteration.
+    If not defined, the value of the "table" option will be used instead.
+    This is handy if you have a complex JOIN instead of a simple table in
+    the "table" option above.
+
+usercolumn
+
+    The name of the column that contains a unix login name.
+    Should be in a fully qualified form.
+
+passwdcolumn
+
+    The name of the column that contains a (encrypted) password string.
+    Should be in a fully qualified form.
+
+statcolumn
+
+    The name of the column or an SQL expression that indicates the status of
+    the user. The status is expressed by the combination of two bitfields
+    shown below:
+
+    bit 0 (0x01): if flagged, pam_mysql deems the account to be expired and
+                  returns PAM_ACCT_EXPIRED. That is, the account is supposed
+                  to no longer be available. Note this doesn't mean that
+                  pam_mysql rejects further authentication operations.
+
+    bit 1 (0x02): if flagged, pam_mysql deems the authentication token
+                  (password) to be expired and returns PAM_NEW_AUTHTOK_REQD.
+                  This ends up requiring that the user enter a new password.
+
+    This option is available since 0.6.
+
+crypt (plain)
+
+    The method to encrypt the user's password:
+
+       0 (or "plain") = No encryption.  Passwords stored in plaintext.
+                        HIGHLY DISCOURAGED.
+
+       1 (or "Y")     = Use crypt(3) function.
+
+       2 (or "mysql") = Use MySQL PASSWORD() function. It is possible
+                        that the encryption function used by PAM-MySQL
+                        is different from that of the MySQL server, as
+                        PAM-MySQL uses the function defined in MySQL's
+                        C-client API instead of using PASSWORD() SQL function
+                        in the query.
+                        
+       3 (or "md5")   = Use plain hex MD5.
+
+       4 (or "sha1")  = Use plain hex SHA1.
+
+md5 (false)
+
+    Use MD5 by default for crypt(3) hash. Only meaningful when crypt is
+    set to "Y".
+
+use_323_passwd (false)
+
+    Use MySQL version 3 style encryption function if available and the crypt
+    option is set to "mysql". This is useful if you have a table migrated
+    from the old MySQL database and it stores the old-style passwords.
+
+    This option appeared since 0.7pre2 and 0.6.1.
+
+where
+
+    Additional criteria for the query. For example:
+	    [where=Host.name="web" AND User.active=1]
+
+sqllog (false)
+
+	If set to either "true" or "yes", SQL logging is enabled.
+
+logtable
+
+    The name of the table to which logs are written.
+
+logmsgcolumn
+
+    The name of the column in the log table to which the description of the
+    performed operation is stored.
+
+logusercolumn
+
+    The name of the column in the log table to which the name of the user
+    being authenticated is stored.
+
+logpidcolumn
+
+    The name of the column in the log table to which the pid of the process
+    utilising the pam_mysql's authentication service is stored.
+
+loghostcolumn
+
+    The name of the column in the log table to which the IP address of the
+    machine performing the operation is stored.
+
+logrhostcolumn
+
+    The name of the column in the log table to which the name of the remote
+    host that initiates the session is stored. The value is supposed to be
+    set by the PAM-aware application with pam_set_item(PAM_RHOST).
+
+    Available since 0.7pre3.
+
+logtimecolumn
+
+    The name of the column in the log table to which the timestamp of
+    the log entry is stored.
+
+config_file
+
+    Path to a NSS-MySQL style configuration file which enumerates the options
+    per line. Acceptable option names and the counterparts in the PAM-MySQL
+    are listed below:
+
+    - users.host (host)
+    - users.database (db)
+    - users.db_user (user)
+    - users.db_passwd (passwd)
+    - users.where_clause (host)
+    - users.table (table)
+    - users.update_table (update_table)
+    - users.user_column (usercolumn)
+    - users.password_column (passwdcolumn)
+    - users.status_column (statcolumn)
+    - users.password_crypt (crypt)
+    - users.use_323_password (use_323_passwd)
+    - users.use_md5 (md5)
+    - users.where_clause (where)
+    - users.disconnect_every_operation (disconnect_every_op) *1
+    - verbose (verbose)
+    - log.enabled (sqllog)
+    - log.table (logtable)
+    - log.message_column (logmsgcolumn)
+    - log.pid_column (logpidcolumn)
+    - log.user_column (logusercolumn)
+    - log.host_column (loghostcolumn)
+    - log.rhost_column (logrhostcolumn) *2
+    - log.time_column (logtimecolumn)
+
+    A "#" in front of the line makes it a comment as in NSS-MySQL.
+
+    This is available since 0.7pre1.
+
+    (*1: added in 0.7RC1)
+    (*2: added in 0.7pre3)
+
+use_first_pass (false)
+
+    If true, pam_mysql doesn't prompt a password and uses the one provided
+    given in a preceeding authentication module. If it is not given,
+    authentication fails.
+
+    This is available since 0.7pre2.
+
+try_first_pass (true)
+
+    If true, pam_mysql first tries to authenticate with the password
+    given in a preceeding authentication module. If it fails (because of
+    either unavailableness of a password or simple authentication failure),
+    then pam_mysql prompts a password for the following authentication.
+
+    The semantics actually breaks the backwards compatibility, because
+    authentication is not performed twice in the previous versions when the
+    password given by the previous authentication module is wrong.
+
+    This is available since 0.7pre2.
+
+disconnect_every_op (false)
+
+    By default, pam_mysql keeps connection to the MySQL database until the
+    session is closed. If this option is set to true it disconnects every
+    time the PAM operation has finished.  This option may be useful in case
+    the session lasts quite long.
+
+
+BUGS
+----
+Beware that user names and clear text passwords may be syslogged
+if you explicitly configured PAM-MySQL to log select statements (verbose=1).
+(Not sure why you want to anyway, slogs your system down badly!)
+
+Q&A
+---
+Q. What on earth is PAM anyway?
+
+A. PAM is an acronym for Pluggable Authentication Modules.
+   See http://www.kernel.org/pub/linux/libs/pam/whatispam.html for further
+   information.
+
+Q. Are there any tools for changing passwords, etc. without updating tables
+   directly through the command-line client program? 
+
+A. You can use "passwd" program for that purpose. Note that pam-mysql doesn't
+   permit password change without the root privilege (pid=0).
+
+Q. I need to retrieve misc. UNIX user information such as one's home
+   directory stored in the account table. Can PAM-MySQL do this?
+
+A. No. As the name suggests, PAM is only involved in authentication
+   that in principle has little to do with the account database itself.
+   You need to use the nss-mysql module, which can be retrieved from here:
+   http://savannah.nongnu.org/projects/nss-mysql
+
+Q. How can I quickly tell in which way a given password is encrypted,
+   PASSWORD(), CRYPT()-ed, or md5()?
+
+A. Try using the following MySQL functions: ENCRYPT(), PASSWORD() and md5(),
+   and compare the results with each other.
+
+      SELECT ENCRYPT('mypass'), PASSWORD('mypass'), MD5('mypass');
+
+Q. I set up saslauthd (of Cyrus-SASL) to use PAM-MySQL for authentication and
+   noticed some authentication mechanisms such as CRAM-MD5 don't work. Why?
+
+A. CRAM-MD5 are DIGEST-MD5 are Challenge-Response authentication mechanisms
+   (indeed CRAM is short for Challange-Response Authentication Mechanism),
+   plain-text passwords have to be supplied to the instance that handles
+   authentication communication with the user (that is, the SASL client
+   library), rather than the authenticator (the server). Therefore, it is not
+   possible to use PAM with these mechanisms and then you need to configure
+   Cyrus-SASL to have "SQL" auxprop plugin with MySQL support and specify
+   "auxprop" for the preferred password checking method.
+
+   For instance, if you want to use it in conjunction with Postfix, the SASL
+   configuration file "smtpd.conf", which is put in the Cyrus-SASL's plugin
+   directory (or the location included in the SASL_PATH environment variable),
+   would look like the following:
+
+      pwcheck_method: auxprop
+      mech_list: plain login cram-md5 digest-md5
+      sql_engine: mysql
+      sql_database: sys
+      sql_user: someuser
+      sql_passwd: fubar
+      sql_select: SELECT password FROM users WHERE name='%u' and domain='%r';
+
+   Note that passwords should be stored in plain-text in this case.
+
+Q. PAM-MySQL is licensed under GNU Public License and I heard that
+   GPL requires the program that links to a GPL'ed shared binary object
+   at runtime also being covered by GPL. Is it safe to use PAM-MYSQL
+   from a program with a license that is incompatible with GPL?
+
+A. Our thought regarding this issue is that runtime dynamic linking itself
+   is not an action to make a derivative work of anything that ends up
+   in the physicial memory. No matter what GPL is like, and will be like,
+   we exceptionally grant you a permanent and non-exclusive right to use a
+   binary-formed derivative of PAM-MySQL in combination with any other
+   programs.
+
+Q. I could not build pam-mysql on Solaris with the official MySQL binary
+   package. How can I fix this?
+
+A. You apparently got a binary package built with the Forte C compiler,
+   which requires a different set of command-line options than the compiler
+   (most likely GCC) you are now trying to build pam_mysql with.
+
+   There are two options to deal with this problem:
+
+   1. Get the Forte C compiler and build pam-mysql with it.
+   2. Build MySQL from the source with the same compiler as the one that
+      should be used to build pam-mysql.
+
+LINKS
+-----
+- MySQL
+  http://www.mysql.com/
+
+- NSS-MySQL:
+  http://savannah.nongnu.org/projects/nss-mysql
+
+- OpenPAM
+  http://www.openpam.org/
+
+- PAM
+  http://pam.sourceforge.net/
+
+- sysauth-pgsql (the PostgreSQL counterpart of PAM-MySQL, accompanied by the
+  nss module also)
+  http://sourceforge.net/projects/sysauth-pgsql
+
+- Cyrus-SASL
+  http://asg.web.cmu.edu/sasl/sasl-library.html
+
+- Sendmail-SQL:
+  http://www.sourceforge.net/projects/sendmail-sql
+
