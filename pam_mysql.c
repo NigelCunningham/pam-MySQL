@@ -3444,7 +3444,7 @@ static pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
 	}
 
 	for (i = 0; i < nargs; i++) {
-		if (resps[i].resp != NULL &&
+		if (resps && resps[i].resp != NULL &&
 				NULL == (retval[i] = xstrdup(resps[i].resp))) {
 			syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
 			err = PAM_MYSQL_ERR_ALLOC;
