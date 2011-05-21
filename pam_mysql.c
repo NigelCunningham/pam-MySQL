@@ -919,6 +919,10 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
 			*pretval = "drupal7";
 			break;
 
+		case 6:
+			*pretval = "joomla15";
+			break;
+
 		default:
 			*pretval = NULL;
 	}
@@ -957,6 +961,11 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
 	if (strcmp(newval_str, "5") == 0 || strcasecmp(newval_str, "drupal7") == 0) {
 		*(int *)val = 5;
+		return PAM_MYSQL_ERR_SUCCESS;
+	}
+
+	if (strcmp(newval_str, "6") == 0 || strcasecmp(newval_str, "joomla15") == 0) {
+		*(int *)val = 6;
 		return PAM_MYSQL_ERR_SUCCESS;
 	}
 
@@ -2935,6 +2944,44 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 #endif
 				} break;
 
+/* joomla 1.5 like passwd*/
+			case 6:
+				{
+				/* Joomla 1.5 like password */
+#ifdef HAVE_PAM_MYSQL_MD5_DATA
+					char buf[33];
+					buf[32]=0;
+
+					char *salt = row[0];
+					char *hash = strsep(&salt,":");
+
+					int len = strlen(passwd)+strlen(salt);
+
+					char *tmp;
+
+					if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
+						syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+						err = PAM_MYSQL_ERR_ALLOC;
+						goto out;
+					}
+
+					strcat(tmp,passwd);
+					strcat(tmp,salt);
+
+					pam_mysql_md5_data((unsigned char*)tmp, len, buf);
+
+					vresult = strcmp(hash, buf);
+					{
+						char *p = buf - 1;
+						while (*(++p)) *p = '\0';
+					}
+
+					xfree(tmp);
+#else
+					syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+#endif
+				} break;
+
 				default: {
 				}
 			}
@@ -3121,6 +3168,51 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
 #endif
 				break;
 
+			case 6:
+				{
+#ifdef HAVE_PAM_MYSQL_MD5_DATA
+				if (NULL == (encrypted_passwd = xcalloc(32 + 1+ 32 +1, sizeof(char)))) {
+					syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+					err = PAM_MYSQL_ERR_ALLOC;
+					goto out;
+				}
+
+				int len=strlen(new_passwd)+32;
+
+				char *tmp;
+
+				if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
+					syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+					err = PAM_MYSQL_ERR_ALLOC;
+					goto out;
+				}
+
+				char salt[33];
+				salt[32]=0;
+
+				srandom(time());
+
+				int i;
+				for(i=0;i<32; i++)
+					salt[i]=(char)((random()/(double)RAND_MAX * 93.0) +33.0);
+
+				strcat(tmp,new_passwd);
+				strcat(tmp,salt);
+
+				pam_mysql_md5_data((unsigned char*)tmp, len, encrypted_passwd);
+
+				xfree(tmp);
+
+				strcat(encrypted_passwd,":");
+				strcat(encrypted_passwd,salt);
+
+#else
+				syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+				err = PAM_MYSQL_ERR_NOTIMPL;
+				goto out;
+#endif
+				break;
+				}
 			default:
 				encrypted_passwd = NULL;
 				break;
