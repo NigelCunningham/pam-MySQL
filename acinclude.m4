@@ -69,6 +69,7 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
   AC_TRY_COMPILE([
 #include <pam_appl.h>
 #include <pam_modules.h>
+#include <stddef.h>
   ], [
     int (*conv)(int num_msg, const struct pam_message **msg,
         struct pam_response **resp, void *appdata_ptr) = NULL;
