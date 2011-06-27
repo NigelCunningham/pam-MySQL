@@ -3684,7 +3684,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
 			case PAM_NO_MODULE_DATA:
 				passwd = NULL;
-				break;
+				goto askpass;
 
 			default:
 				retval = PAM_AUTH_ERR;
@@ -3750,6 +3750,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		}
 	}
 
+askpass:
 	switch (pam_mysql_converse(ctx, &resps, pamh, 1,
 			PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_PASSWORD)) {
 		case PAM_MYSQL_ERR_SUCCESS:
@@ -3777,6 +3778,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		goto out;
 	}
 
+	if (passwd_is_local) {
+		(void) pam_set_item(pamh, PAM_AUTHTOK, passwd);
+	}
+
 	switch (pam_mysql_open_db(ctx)) {
 		case PAM_MYSQL_ERR_BUSY:
 		case PAM_MYSQL_ERR_SUCCESS:
@@ -3793,10 +3798,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		default:
 			retval = PAM_SERVICE_ERR;
 			goto out;
-	}
-
-	if (passwd_is_local) {
-		(void) pam_set_item(pamh, PAM_AUTHTOK, passwd);
 	}
 
 	err = pam_mysql_check_passwd(ctx, user, passwd,
