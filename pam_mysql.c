@@ -140,6 +140,9 @@
 #include <mysql.h>
 #endif
 
+#ifdef HAVE_MHASH
+#include <mhash.h>
+#endif
 /*
  * here, we make definitions for the externally accessible functions
  * in this file (these definitions are required for static modules
@@ -649,6 +652,74 @@ static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char
 #endif
 /* }}} */
 
+/* {{{ pam_mysql_sha1_django_data */
+#if defined(HAVE_MHASH)
+#define HAVE_PAM_MYSQL_SHA1_DJANGO_DATA
+static char *pam_mysql_sha1_django_data(const unsigned char *d, unsigned int sz, char *md, const char *stored_pw)
+{
+	char *buf;
+	size_t i, j;
+	MHASH handle;
+	unsigned char *hash;
+	char *token, *salted_password, *django_salt, *db_password;
+	
+	if (md == NULL) {
+		if ((md = xcalloc(51 + 1, sizeof(char))) == NULL) {
+			return NULL;
+		}
+	}
+		
+	handle = mhash_init(MHASH_SHA1);
+	if(handle == MHASH_FAILED) {
+		free(md);
+		md = NULL;
+		syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "could not initialize mhash library.");
+		return NULL;
+	} else {
+		db_password = (char *)malloc(strlen(stored_pw));
+		strcpy(db_password, stored_pw);
+		// encryption type
+		token = strtok(db_password, "$");
+		django_salt = strtok(NULL, "$");
+		token = strtok(NULL, "$");
+		salted_password = strcat(token, d);
+	
+		mhash(handle, salted_password, strlen(salted_password));
+		hash = mhash_end(handle);
+		if (hash != NULL) {
+			buf_size = (mhash_get_block_size(MHASH_SHA1) * 2)+1;
+			buf = (char *)malloc(buf_size);
+			bzero(buf, buf_size);
+		
+			for (i = 0; i < mhash_get_block_size(MHASH_SHA1); i++) {
+				sprintf(&buf[i * 2], "%.2x", hash[i]);
+			}
+			free(hash);
+		
+			md[0] = 's';
+			md[1] = 'h';
+			md[2] = 'a';
+			md[3] = '1';
+			md[4] = '$';
+			for (i = 5, j=0; i < (strlen(django_salt)+5); i++, j++) {
+				sprintf(&md[i], "%c", django_salt[j]);
+			}
+			md[i] = '$';
+		
+			for (i = (i+1), j=0; i <= 51; i++, j++) {
+				sprintf(&md[i], "%c", buf[j]);
+			}
+			free(buf);
+			free(db_password);
+			md[i+1] = '\0';
+		} else {
+			md = strdup("!");
+		}
+	}
+}
+#endif
+/* }}} */
+
 #if defined(HAVE_PAM_MYSQL_SHA1_DATA) && defined(HAVE_PAM_MYSQL_MD5_DATA)
 #define HAVE_PAM_MYSQL_DRUPAL7
 /**
@@ -922,7 +993,11 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
 		case 6:
 			*pretval = "joomla15";
 			break;
-
+		
+		case 7:
+			*pretval = "django";
+			break;
+		
 		default:
 			*pretval = NULL;
 	}
@@ -966,6 +1041,11 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
 	if (strcmp(newval_str, "6") == 0 || strcasecmp(newval_str, "joomla15") == 0) {
 		*(int *)val = 6;
+		return PAM_MYSQL_ERR_SUCCESS;
+	}
+	
+	if (strcmp(newval_str, "7") == 0 || strcasecmp(newval_str, "django") == 0) {
+		*(int *)val = 7;
 		return PAM_MYSQL_ERR_SUCCESS;
 	}
 
@@ -2982,6 +3062,21 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 #endif
 				} break;
 
+				case 7: {
+#ifdef HAVE_PAM_MYSQL_SHA1_DJANGO_DATA
+					char buf[52];
+					pam_mysql_sha1_django_data((unsigned char*)passwd, strlen(passwd),
+							buf, row[0]);
+					vresult = strcmp(row[0], buf);
+					{
+						char *p = buf - 1;
+						while (*(++p)) *p = '\0';
+					}
+#else
+					syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 mhash is not supported in this build.");
+#endif
+				} break;
+
 				default: {
 				}
 			}
@@ -3212,7 +3307,25 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
 				goto out;
 #endif
 				break;
+			
+			}
+			
+			case 7: {
+#ifdef HAVE_PAM_MYSQL_SHA1_DJANGO_DATA
+				if (NULL == (encrypted_passwd = xcalloc(51 + 1, sizeof(char)))) {
+					syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+					err = PAM_MYSQL_ERR_ALLOC;
+					goto out;
 				}
+				pam_mysql_sha1_django_data((unsigned char*)new_passwd,
+						strlen(new_passwd), encrypted_passwd);
+#else
+				syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 mhash is not supported in this build.");
+				err = PAM_MYSQL_ERR_NOTIMPL;
+				goto out;
+#endif
+				break;
+			}
 			default:
 				encrypted_passwd = NULL;
 				break;
