@@ -751,7 +751,7 @@ static char *d7_hash(int use_md5, char *string1, int len1, char *string2, int le
 
 // The first 12 characters of an existing hash are its setting string.
 static char * d7_password_crypt(int use_md5, char *password, char *setting) {
-	char salt[8], *old, *new, *final;
+	char salt[9], *old, *new, *final;
 	int expected, count, count_log2 = d7_password_get_count_log2(setting);
 	int len;
 
@@ -762,6 +762,7 @@ static char * d7_password_crypt(int use_md5, char *password, char *setting) {
 	}
 
 	strncpy(salt, &setting[4], 8);
+	salt[8] = '\0';
 	if (strlen(salt) != 8) {
 		syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "_password_crypt: Salt length is not 8.");
 		return NULL;
