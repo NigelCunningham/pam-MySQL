@@ -411,6 +411,39 @@ int main()
   fi
 ])
 
+AC_DEFUN([PAM_MYSQL_CHECK_MHASH], [
+  mhash_CFLAGS=
+  mhash_LIBS=
+  mhash_lib_name="mhash"
+  for _pfx in $1; do
+    for dir in "$_pfx/include/mhash" "$_pfx/include"; do
+      if test -e "$dir/mhash.h" -a -z "$mhash_CFLAGS"; then
+        ac_save_CPPFLAGS="$CPPFLAGS"
+        CPPFLAGS="$CPPFLAGS -I$dir"
+		  fi
+		done
+    for dir in "$_pfx/lib" "$_pfx/lib64"; do
+      if test -z "$mhash_LIBS"; then
+        ac_save_LIBS="$LIBS"
+        LIBS="$LIBS -L$dir"
+        name="$mhash_lib_name"
+        if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
+          AC_CHECK_LIB([$mhash_lib_name], [mhash_client_init], [
+            mhash_LIBS="-L$dir -l$mhash_lib_name"
+          ],[]) 
+        fi
+        LIBS="$ac_save_LIBS"
+      fi
+    done
+  done
+  
+  if test -z "$mhash_CFLAGS" -o -z "$mhash_LIBS"; then
+    ifelse([$3],[],[:],[$3])
+  else
+    ifelse([$2],[],[:],[$2])
+  fi
+])
+
 AC_DEFUN([PAM_MYSQL_CHECK_MD5_HEADERS], [
   AC_MSG_CHECKING([if md5.h is derived from Cyrus SASL Version 1])
   AC_TRY_COMPILE([

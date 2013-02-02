@@ -1,11 +1,11 @@
 dnl $Id: configure.in,v 1.6.2.7 2006/01/09 10:35:59 moriyoshi Exp $
 sinclude([pkg.m4])
 
-AC_PREREQ([2.57])
-AC_INIT(pam_mysql, 0.7RC1)
+AC_PREREQ([2.68])
+AC_INIT([pam_mysql],[0.7RC1])
 AM_INIT_AUTOMAKE(pam_mysql, 0.7RC1)
 AC_CONFIG_SRCDIR(pam_mysql.c)
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
 AC_SUBST(PACKAGE_VERSION)
@@ -97,6 +97,24 @@ AC_ARG_WITH([cyrus-sasl2], [  --with-cyrus-sasl2[[=PREFIX]] specify Cyrus-SASL2 
 CFLAGS="$CFLAGS $sasl_v2_CFLAGS"
 LIBS="$LIBS $sasl_v2_LIBS"
 
+AC_ARG_WITH([mhash], [  --with-mhash[[=PREFIX]]       specify mhash installation prefix], [
+  if test -z "$withval" -o "$withval" = "yes"; then
+    dnl try autodetection...
+    PAM_MYSQL_CHECK_MHASH([/usr /usr/local /opt /opt/mhash], [
+      AC_DEFINE([HAVE_MHASH], [1], [Define to 1 if mhash is installed])
+      mhash_avail=1
+    ]) 
+  else
+    PAM_MYSQL_CHECK_MHASH(["$withval"], [
+      AC_DEFINE([HAVE_MHASH], [1], [Define to 1 if mhash is installed])
+      mhash_avail=1
+    ], [])
+  fi
+], [])
+
+CFLAGS="$CFLAGS $mhash_CFLAGS"
+LIBS="$LIBS $mhash_LIBS"
+
 AC_ARG_WITH([cyrus-sasl], [  --with-cyrus-sasl[[=PREFIX]] specify Cyrus-SASL installation prefix], [
   if test -z "$sasl_v2_avail"; then
     if test -z "$withval" -o "$withval" = "yes"; then
@@ -145,7 +163,8 @@ PAM_MYSQL_CHECK_CRYPT
 AC_SUBST(INCLUDES)
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile])
-AC_OUTPUT([pam_mysql.spec])
+AC_CONFIG_FILES([pam_mysql.spec])
+AC_OUTPUT
 
 dnl vim600: sts=2 sw=2 ts=2 et
 
