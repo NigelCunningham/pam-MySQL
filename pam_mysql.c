@@ -2572,6 +2572,8 @@ static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
 
 	mysql_close(ctx->mysql_hdl);
 
+	mysql_library_end();
+
 	xfree(ctx->mysql_hdl);
 	ctx->mysql_hdl = NULL;
 }
