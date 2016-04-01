@@ -2,9 +2,9 @@ Summary: A PAM-module for authentication against MySQL
 Name: pam_mysql
 Version: 0.7RC1
 Release: 1
-Copyright: Freely Distributable
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/pam-mysql/
+License: GPLv2
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Requires: pam
