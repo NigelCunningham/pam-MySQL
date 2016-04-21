@@ -120,8 +120,6 @@ crypt (plain)
 
        4 (or "sha1")  	= Use plain hex SHA1.
        
-       4 (or "sha1")  	= Use plain hex SHA1.
-       
        5 (or "drupal7")	= Use Drupal7 salted passwords
 
 md5 (false)
