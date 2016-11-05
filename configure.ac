@@ -2,8 +2,8 @@ dnl $Id: configure.in,v 1.6.2.7 2006/01/09 10:35:59 moriyoshi Exp $
 sinclude([pkg.m4])
 
 AC_PREREQ([2.57])
-AC_INIT(pam_mysql, 0.7RC1)
-AM_INIT_AUTOMAKE(pam_mysql, 0.7RC1)
+AC_INIT(pam_mysql, 0.8)
+AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR(pam_mysql.c)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
@@ -25,7 +25,8 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netdb.h string.h strings.h sys/socket.h sys/types.h sys/stat.h sys/param.h fcntl.h syslog.h unistd.h stdarg.h errno.h crypt.h])
+AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netdb.h string.h strings.h sys/socket.h sys/types.h sys/stat.h sys/param.h fcntl.h syslog.h unistd.h stdarg.h errno.h crypt.h security/pam_appl.h])
+AC_CHECK_HEADERS([security/pam_appl.h], [CFLAGS="-I/usr/include/security $CLFAGS"])
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
@@ -142,10 +143,10 @@ AC_ARG_WITH([pam_mods_dir], [  --with-pam-mods-dir=DIR specify PAM module instal
 PAM_MYSQL_CHECK_MD5_HEADERS
 PAM_MYSQL_CHECK_CRYPT
 
-AC_SUBST(INCLUDES)
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT([pam_mysql.spec])
+AC_CONFIG_MACRO_DIRS([m4])
 
 dnl vim600: sts=2 sw=2 ts=2 et
 
