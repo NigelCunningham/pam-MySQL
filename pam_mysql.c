@@ -2,6 +2,7 @@
  * PAM module for MySQL
  *
  * Copyright (C) 1998-2005 Gunay Arslan and the contributors.
+ * Copyright (C) 2015-2016 Nigel Cunningham and contributors.
  * All rights reserved.
  * 
  * This program is free software; you can redistribute it and/or
@@ -31,8 +32,8 @@
  *        Fredrik Rambris (RPM spec file)
  *        Peter E. Stokke (chauthtok service support)
  *        Sergey Matveychuk (OpenPAM support)
- *
- * $Id: pam_mysql.c,v 1.10.2.15 2006/01/09 10:35:59 moriyoshi Exp $
+ * Package unmaintained for some years; now taken care of by Nigel Cunningham
+ *   https://github.com/NigelCunningham/pam-MySQL
  */
 
 #define _GNU_SOURCE
