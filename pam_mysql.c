@@ -2885,10 +2885,10 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 					if (ctx->use_323_passwd) {
 						make_scrambled_password_323(buf, passwd);
 					} else {
-						make_scrambled_password(buf, passwd);
+						my_make_scrambled_password(buf, passwd, strlen(passwd));
 					}
 #else
-					make_scrambled_password(buf, passwd);
+					my_make_scrambled_password(buf, passwd, strlen(passwd));
 #endif
 
 					vresult = strcmp(row[0], buf);
@@ -3130,10 +3130,10 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
 				if (ctx->use_323_passwd) {
 					make_scrambled_password_323(encrypted_passwd, new_passwd);
 				} else {
-					make_scrambled_password(encrypted_passwd, new_passwd);
+					my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
 				}
 #else
-				make_scrambled_password(encrypted_passwd, new_passwd);
+				my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
 #endif
 				break;
 
