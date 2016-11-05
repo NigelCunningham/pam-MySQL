@@ -2866,6 +2866,7 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 
 	if (row[0] != NULL) {
 		if (passwd != NULL) {
+			char *crypted_password = NULL;
 			switch (ctx->crypt_type) {
 				/* PLAIN */
 				case 0:
@@ -2874,7 +2875,7 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 
 				/* ENCRYPT */
 				case 1:
-					char *crypted_password = crypt(passwd, row[0]);
+					crypted_password = crypt(passwd, row[0]);
 					if (crypted_password == NULL) {
 						syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "something went wrong when invoking crypt() - %s", strerror(errno));
 						vresult = 1; // fail
