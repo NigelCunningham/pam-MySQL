@@ -1,5 +1,11 @@
 pam_mysql - A PAM authentication module against MySQL database.
-$Id: README,v 1.8.2.9 2006/01/09 10:35:59 moriyoshi Exp $
+
+Formerly maintained by moriyoshi, now taken care of by Nigel Cunningham.
+https://github.com/NigelCunningham/pam-MySQL.
+
+The following is the original (and still valid) readme.
+
+=====================================================================
 
 Introduction
 ------------
