@@ -71,9 +71,9 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_modules.h>
   ], [
     int (*conv)(int num_msg, const struct pam_message **msg,
-        struct pam_response **resp, void *appdata_ptr) = NULL;
-    struct pam_conv c = { conv, NULL };
-    c.conv = NULL;
+        struct pam_response **resp, void *appdata_ptr) = 0;
+    struct pam_conv c = { conv, 0 };
+    c.conv = 0;
   ], [
     AC_MSG_RESULT(yes)
     AC_DEFINE([PAM_CONV_CONST], [const], [Define to `const' if the 2nd arg of pam_conv.conv takes const pointer.])
