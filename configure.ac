@@ -56,6 +56,9 @@ dnl try autodetection...
   PAM_MYSQL_CHECK_LIBMYSQLCLIENT([/usr /usr/local /usr/mysql /opt/mysql])
 ])
 
+# Explicit call because the first PKG_CHECK_MODULES is conditional
+PKG_PROG_PKG_CONFIG
+
 AC_ARG_WITH([openssl], [  --with-openssl[[=PREFIX]] specify OpenSSL installation prefix], [
   if test -z "$withval" -o "$withval" = "yes"; then
     dnl try autodetection...
