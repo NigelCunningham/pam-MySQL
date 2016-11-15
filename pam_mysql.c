@@ -80,9 +80,7 @@
 #include <sys/socket.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
+#include <time.h>
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -3198,7 +3196,7 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
           char salt[33];
           salt[32]=0;
 
-          srandom(time());
+          srandom(time(NULL));
 
           int i;
           for(i=0;i<32; i++)
