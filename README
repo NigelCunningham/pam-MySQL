@@ -21,7 +21,7 @@ To try this module, you need the following stuff:
 
 Installation instruction
 ------------------------
-See INSTALL file for detail.
+See INSTALL.pam-mysql file for detail.
 
 An example of the configuration file:
 ---------------------------------------------------------------
