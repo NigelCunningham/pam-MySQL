@@ -1,6 +1,3 @@
-dnl $Id: configure.in,v 1.6.2.7 2006/01/09 10:35:59 moriyoshi Exp $
-sinclude([pkg.m4])
-
 AC_PREREQ([2.57])
 AC_INIT(pam_mysql, 0.8)
 AM_INIT_AUTOMAKE
@@ -147,6 +144,3 @@ AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT([pam_mysql.spec])
 AC_CONFIG_MACRO_DIRS([m4])
-
-dnl vim600: sts=2 sw=2 ts=2 et
-
