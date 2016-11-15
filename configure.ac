@@ -24,7 +24,6 @@ AC_PROG_LIBTOOL
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netdb.h string.h strings.h sys/socket.h sys/types.h sys/stat.h sys/param.h fcntl.h syslog.h unistd.h stdarg.h errno.h crypt.h security/pam_appl.h])
-AC_CHECK_HEADERS([security/pam_appl.h], [CFLAGS="-I/usr/include/security $CLFAGS"])
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE

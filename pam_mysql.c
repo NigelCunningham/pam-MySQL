@@ -153,8 +153,8 @@
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
-#include <pam_appl.h>
-#include <pam_modules.h>
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
 
 /* }}} */
 
