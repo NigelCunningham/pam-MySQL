@@ -1,5 +1,6 @@
-libdir = @PAM_MODS_DIR@
-lib_LTLIBRARIES = pam_mysql.la
+# install this platform-dependent module by the 'install-exec' rules
+pamexecdir = @PAM_MODS_DIR@
+pamexec_LTLIBRARIES = pam_mysql.la
 
 pam_mysql_la_SOURCES = pam_mysql.c
 pam_mysql_la_LDFLAGS = -module -avoid-version
