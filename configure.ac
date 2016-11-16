@@ -29,28 +29,14 @@ dnl try autodetection...
   PAM_MYSQL_CHECK_LIBMYSQLCLIENT([/usr /usr/local /usr/mysql /opt/mysql])
 ])
 
-# Explicit call because the first PKG_CHECK_MODULES is conditional
-PKG_PROG_PKG_CONFIG
+AC_ARG_WITH([openssl],
+    [AS_HELP_STRING([--with-openssl],[use the OpenSSL crypto provider @<:@default=check@:>@])],,
+    [with_openssl=check])
 
-AC_ARG_WITH([openssl], [  --with-openssl[[=PREFIX]] specify OpenSSL installation prefix], [
-  if test -z "$withval" -o "$withval" = "yes"; then
-    dnl try autodetection...
-    PKG_CHECK_MODULES([openssl], [openssl], [
-      AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])
-    ], [
-      PAM_MYSQL_CHECK_OPENSSL([/usr /usr/local /opt/openssl /opt/ssl /usr/ssl /usr/local/ssl], [
-        AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])
-      ],[])
-    ]) 
-  else
-    PAM_MYSQL_CHECK_OPENSSL(["$withval"], [
-      AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])
-    ], [])
-  fi
-], [])
-
-CFLAGS="$CFLAGS $openssl_CFLAGS"
-LIBS="$LIBS $openssl_LIBS"
+AS_IF([test x"$with_openssl" != xno],
+    [PKG_CHECK_MODULES([openssl],[libcrypto],
+         [AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])],
+         [AS_IF([test "x$with_openssl" != xcheck],[AC_MSG_ERROR([Unable to find OpenSSL])])])])
 
 sasl_v2_avail=
 

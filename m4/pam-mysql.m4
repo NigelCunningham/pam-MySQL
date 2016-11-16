@@ -258,52 +258,6 @@ AC_DEFUN([PAM_MYSQL_CHECK_LIBMYSQLCLIENT], [
   CPPFLAGS="$ac_save_CPPFLAGS"
 ])
 
-AC_DEFUN([PAM_MYSQL_CHECK_OPENSSL], [
-  openssl_CFLAGS=
-  openssl_LIBS=
-  crypto_lib_name="crypto"
-  ssl_lib_name="ssl"
-
-  for _pfx in $1; do
-    for dir in "$_pfx/include"; do
-      if test -e "$dir/openssl/opensslv.h" -a -z "$openssl_CFLAGS"; then
-        ac_save_CPPFLAGS="$CPPFLAGS"
-        CPPFLAGS="$CPPFLAGS -I$dir/openssl"
-        AC_CHECK_HEADERS([opensslv.h], [
-          openssl_CFLAGS="-I$dir"
-        ], [])
-        CPPFLAGS="$ac_save_CPPFLAGS"
-      fi
-    done
-    for dir in "$_pfx/lib" "$_pfx/lib/ssl" "$_pfx/lib/openssl"; do
-      if test -z "$openssl_LIBS"; then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS -L$dir"
-        name="$crypto_lib_name"
-        if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
-          name="$ssl_lib_name"
-          if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
-            LIBS="$LIBS -l$crypto_lib_name -l$ssl_lib_name"
-
-            AC_CHECK_LIB([$crypto_lib_name], [CRYPTO_free], [
-              AC_CHECK_LIB([$ssl_lib_name], [SSL_CTX_new], [
-                openssl_LIBS="-L$dir -l$crypto_lib_name -l$ssl_lib_name"
-              ])
-            ],[]) 
-          fi
-        fi
-        LIBS="$ac_save_LIBS"
-      fi
-    done
-  done
-
-  if test -z "$openssl_CFLAGS" -o -z "$openssl_LIBS"; then
-    ifelse([$3],[],[:],[$3])
-  else
-    ifelse([$2],[],[:],[$2])
-  fi
-])
-
 AC_DEFUN([PAM_MYSQL_CHECK_CYRUS_SASL_V1], [
   sasl_v1_CFLAGS=
   sasl_v1_LIBS=
