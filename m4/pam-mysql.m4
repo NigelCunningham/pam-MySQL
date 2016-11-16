@@ -25,8 +25,8 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_appl.h>
 #include <pam_modules.h>
   ], [
-    const char *user;
-    pam_get_user((void*)0, &user, (void*)0);
+    int data = 0;
+    pam_get_user((void *)&data, (const char **)&data, (void *)&data);
   ], [
     AC_MSG_RESULT([yes])
     AC_DEFINE([PAM_GET_USER_CONST], [const], [Define to `const' if the 2nd arg of pam_get_user() takes const pointer])
@@ -40,8 +40,8 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_appl.h>
 #include <pam_modules.h>
   ], [
-    const void *data;
-    pam_get_data((void*)0, (void*)0, &data);
+    int data = 0;
+    pam_get_data((void *)&data, (void *)&data, (const void **)&data);
   ], [
     AC_MSG_RESULT([yes])
     AC_DEFINE([PAM_GET_DATA_CONST], [const], [Define to `const' if the 2nd arg of pam_get_data() takes const pointer])
@@ -55,8 +55,8 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_appl.h>
 #include <pam_modules.h>
   ], [
-    const void *item;
-    pam_get_item((void*)0, 0, &item);
+    int data = 0;
+    pam_get_item((void *)&data, 0, (const void **)&data);
   ], [
     AC_MSG_RESULT([yes])
     AC_DEFINE([PAM_GET_ITEM_CONST], [const], [Define to `const' if the 2nd arg of pam_get_item() takes const pointer])
