@@ -1183,7 +1183,7 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s is directory", file);
           break;
 
-#ifdef HAVE_ELOOP
+#if HAVE_DECL_ELOOP
         case ELOOP:
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s refers to an inresolvable symbolic link", file);
           break;
@@ -1205,7 +1205,7 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "kernel resource exhausted");
           break;
 
-#ifdef HAVE_EOVERFLOW
+#if HAVE_DECL_EOVERFLOW
         case EOVERFLOW:
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s is too big", file);
           break;

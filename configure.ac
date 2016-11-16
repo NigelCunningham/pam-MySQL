@@ -4,49 +4,23 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Wno-extra-portability dist-xz no-dist-gzip])
 AC_CONFIG_SRCDIR(pam_mysql.c)
 AM_CONFIG_HEADER(config.h)
-AM_MAINTAINER_MODE
 
 AC_SUBST(PACKAGE_VERSION)
 AC_SUBST(PACKAGE_NAME)
-AC_SUBST(PACKAGE_TARNAME)
 
-enable_static="no"
-enable_shared="yes"
+LT_INIT([disable-static])
 
-AC_PROG_YACC
-AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
 
-AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netdb.h string.h strings.h sys/socket.h sys/types.h sys/stat.h sys/param.h fcntl.h syslog.h unistd.h stdarg.h errno.h crypt.h security/pam_appl.h])
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_C_INLINE
 AC_TYPE_SIZE_T
-AC_C_VOLATILE
-AC_C_STRINGIZE
-AC_TYPE_PID_T
+AC_CHECK_DECLS([ELOOP, EOVERFLOW],,,[[#include <errno.h>]])
+AC_SEARCH_LIBS([socket],[socket],,[AC_MSG_ERROR([unable to find the socket() function])])
+AC_CHECK_FUNCS([getaddrinfo])
 
-AC_FUNC_ALLOCA
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-PAM_MYSQL_CHECK_DEFINES([
-#include <errno.h>
-], [ELOOP EOVERFLOW])
-PAM_MYSQL_CHECK_NETWORK_LIBS
-AC_CHECK_FUNCS([inet_ntop getaddrinfo freeaddrinfo strcasecmp strdup])
 PAM_MYSQL_CHECK_IPV6
 PAM_MYSQL_CHECK_GETHOSTBYNAME_R
-
-AC_CHECK_SIZEOF([char])
-AC_CHECK_SIZEOF([short])
-AC_CHECK_SIZEOF([int])
-AC_CHECK_SIZEOF([long])
 
 AC_ARG_WITH([mysql], [  --with-mysql=PREFIX     specify MySQL installation prefix], [
   PAM_MYSQL_CHECK_LIBMYSQLCLIENT(["$withval"])
@@ -141,7 +115,7 @@ AC_ARG_WITH([pam_mods_dir], [  --with-pam-mods-dir=DIR specify PAM module instal
 ])
 
 PAM_MYSQL_CHECK_MD5_HEADERS
-PAM_MYSQL_CHECK_CRYPT
+AC_SEARCH_LIBS([crypt],[crypt],,[AC_MSG_ERROR([unable to find the crypt() function])])
 
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile])

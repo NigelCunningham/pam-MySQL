@@ -1,5 +1,3 @@
-dnl $Id: acinclude.m4,v 1.6.2.10 2006/01/09 10:35:59 moriyoshi Exp $
-
 AC_DEFUN([PAM_MYSQL_CHECK_CONST], [
   AC_CACHE_CHECK([$1 availability], [ac_cv_const_[]$1], [
     AC_TRY_COMPILE([$4], [
@@ -306,13 +304,6 @@ AC_DEFUN([PAM_MYSQL_CHECK_OPENSSL], [
   fi
 ])
 
-AC_DEFUN([PAM_MYSQL_CHECK_CRYPT], [
-  AC_CHECK_LIB([crypt], [crypt], [ 
-    LIBS="$LIBS -lcrypt"
-  ], [])
-  AC_CHECK_FUNCS([crypt], [], [])
-])
-
 AC_DEFUN([PAM_MYSQL_CHECK_CYRUS_SASL_V1], [
   sasl_v1_CFLAGS=
   sasl_v1_LIBS=
@@ -449,25 +440,6 @@ md5_calc(0, 0, 0);
   ])
 ])
 
-AC_DEFUN([PAM_MYSQL_CHECK_DEFINES], [
-  AC_FOREACH([AC_Header], [$2], [
-    AH_TEMPLATE(AS_TR_CPP(HAVE_[]AC_Header),
-	    [Define to 1 if ]AC_Header[ is an usable constant.])
-  ])
-
-  for ac_def in $2; do
-    AC_MSG_CHECKING([$ac_def availability])
-    AC_TRY_COMPILE([$1], [
-int dummy = (int)$ac_def;
-    ], [
-      AC_MSG_RESULT([yes])
-      AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_$ac_def), 1)
-    ], [
-      AC_MSG_RESULT([no])
-    ])
-  done
-])
-
 AC_DEFUN([PAM_MYSQL_CHECK_IPV6], [
   ac_save_CFLAGS="$CFLAGS"
   CFLAGS="$INCLUDES $CFLAGS"
@@ -518,17 +490,3 @@ AC_DEFUN([PAM_MYSQL_CHECK_GETHOSTBYNAME_R], [
    
   CFLAGS="$ac_save_CFLAGS"
 ])
-
-AC_DEFUN([PAM_MYSQL_CHECK_NETWORK_LIBS], [
-  AC_CHECK_LIB([socket], [socket], [
-    LIBS="$LIBS -lsocket"
-  ], [], [-lnsl])
-
-  AC_CHECK_FUNC([gethostbyname], [
-    AC_CHECK_LIB([nsl], [gethostbyname], [
-      LIBS="$LIBS -lnsl"
-    ], [], [-lsocket])
-  ], [])
-])
-
-dnl vim600: sts=2 sw=2 ts=2 et
