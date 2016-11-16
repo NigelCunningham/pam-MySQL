@@ -1,7 +1,7 @@
 AC_PREREQ([2.58])
 AC_INIT(pam_mysql, 0.8)
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([-Wall -Wno-extra-portability])
 AC_CONFIG_SRCDIR(pam_mysql.c)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
