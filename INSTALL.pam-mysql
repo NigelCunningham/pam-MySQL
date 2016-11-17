@@ -28,18 +28,13 @@ Typical:
         . /usr/mysql
         . /opt/mysql
 
-    --with-openssl=[OPENSSL_INSTALLATION_PREFIX]
+    --with-openssl[=check|yes|no]
 
-        Specifies where the OpenSSL headers and libraries are
-        installed. If the option is supplied but no prefix is
-        explicitly given, configure tries to search them amongst
-        the hard-coded prefixes in the following order:
-
-        . /usr
-        . /usr/local
-        . /opt/openssl
-        . /usr/ssl
-        . /usr/local/ssl
+        Specifies whether to use the MD5 and SHA1 hashing
+        implementations of libcrypto provided by OpenSSL.
+        Uses pkg-config, thus automatic detection can be
+        overridden by the openssl_CFLAGS and openssl_LIBS
+        variables.
 
     --with-cyrus-sasl=[CYRUS_SASL_INSTALLATION_PREFIX]
     --with-cyrus-sasl2=[CYRUS_SASL2_INSTALLATION_PREFIX]

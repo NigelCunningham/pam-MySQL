@@ -1,5 +1,3 @@
-dnl $Id: acinclude.m4,v 1.6.2.10 2006/01/09 10:35:59 moriyoshi Exp $
-
 AC_DEFUN([PAM_MYSQL_CHECK_CONST], [
   AC_CACHE_CHECK([$1 availability], [ac_cv_const_[]$1], [
     AC_TRY_COMPILE([$4], [
@@ -25,8 +23,8 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_appl.h>
 #include <pam_modules.h>
   ], [
-    const char *user;
-    pam_get_user((void*)0, &user, (void*)0);
+    int data = 0;
+    pam_get_user((void *)&data, (const char **)&data, (void *)&data);
   ], [
     AC_MSG_RESULT([yes])
     AC_DEFINE([PAM_GET_USER_CONST], [const], [Define to `const' if the 2nd arg of pam_get_user() takes const pointer])
@@ -40,8 +38,8 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_appl.h>
 #include <pam_modules.h>
   ], [
-    const void *data;
-    pam_get_data((void*)0, (void*)0, &data);
+    int data = 0;
+    pam_get_data((void *)&data, (void *)&data, (const void **)&data);
   ], [
     AC_MSG_RESULT([yes])
     AC_DEFINE([PAM_GET_DATA_CONST], [const], [Define to `const' if the 2nd arg of pam_get_data() takes const pointer])
@@ -55,8 +53,8 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_appl.h>
 #include <pam_modules.h>
   ], [
-    const void *item;
-    pam_get_item((void*)0, 0, &item);
+    int data = 0;
+    pam_get_item((void *)&data, 0, (const void **)&data);
   ], [
     AC_MSG_RESULT([yes])
     AC_DEFINE([PAM_GET_ITEM_CONST], [const], [Define to `const' if the 2nd arg of pam_get_item() takes const pointer])
@@ -71,9 +69,9 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_PROTOS], [
 #include <pam_modules.h>
   ], [
     int (*conv)(int num_msg, const struct pam_message **msg,
-        struct pam_response **resp, void *appdata_ptr) = NULL;
-    struct pam_conv c = { conv, NULL };
-    c.conv = NULL;
+        struct pam_response **resp, void *appdata_ptr) = 0;
+    struct pam_conv c = { conv, 0 };
+    c.conv = 0;
   ], [
     AC_MSG_RESULT(yes)
     AC_DEFINE([PAM_CONV_CONST], [const], [Define to `const' if the 2nd arg of pam_conv.conv takes const pointer.])
@@ -260,59 +258,6 @@ AC_DEFUN([PAM_MYSQL_CHECK_LIBMYSQLCLIENT], [
   CPPFLAGS="$ac_save_CPPFLAGS"
 ])
 
-AC_DEFUN([PAM_MYSQL_CHECK_OPENSSL], [
-  openssl_CFLAGS=
-  openssl_LIBS=
-  crypto_lib_name="crypto"
-  ssl_lib_name="ssl"
-
-  for _pfx in $1; do
-    for dir in "$_pfx/include"; do
-      if test -e "$dir/openssl/opensslv.h" -a -z "$openssl_CFLAGS"; then
-        ac_save_CPPFLAGS="$CPPFLAGS"
-        CPPFLAGS="$CPPFLAGS -I$dir/openssl"
-        AC_CHECK_HEADERS([opensslv.h], [
-          openssl_CFLAGS="-I$dir"
-        ], [])
-        CPPFLAGS="$ac_save_CPPFLAGS"
-      fi
-    done
-    for dir in "$_pfx/lib" "$_pfx/lib/ssl" "$_pfx/lib/openssl"; do
-      if test -z "$openssl_LIBS"; then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS -L$dir"
-        name="$crypto_lib_name"
-        if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
-          name="$ssl_lib_name"
-          if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
-            LIBS="$LIBS -l$crypto_lib_name -l$ssl_lib_name"
-
-            AC_CHECK_LIB([$crypto_lib_name], [CRYPTO_free], [
-              AC_CHECK_LIB([$ssl_lib_name], [SSL_CTX_new], [
-                openssl_LIBS="-L$dir -l$crypto_lib_name -l$ssl_lib_name"
-              ])
-            ],[]) 
-          fi
-        fi
-        LIBS="$ac_save_LIBS"
-      fi
-    done
-  done
-
-  if test -z "$openssl_CFLAGS" -o -z "$openssl_LIBS"; then
-    ifelse([$3],[],[:],[$3])
-  else
-    ifelse([$2],[],[:],[$2])
-  fi
-])
-
-AC_DEFUN([PAM_MYSQL_CHECK_CRYPT], [
-  AC_CHECK_LIB([crypt], [crypt], [ 
-    LIBS="$LIBS -lcrypt"
-  ], [])
-  AC_CHECK_FUNCS([crypt], [], [])
-])
-
 AC_DEFUN([PAM_MYSQL_CHECK_CYRUS_SASL_V1], [
   sasl_v1_CFLAGS=
   sasl_v1_LIBS=
@@ -449,25 +394,6 @@ md5_calc(0, 0, 0);
   ])
 ])
 
-AC_DEFUN([PAM_MYSQL_CHECK_DEFINES], [
-  AC_FOREACH([AC_Header], [$2], [
-    AH_TEMPLATE(AS_TR_CPP(HAVE_[]AC_Header),
-	    [Define to 1 if ]AC_Header[ is an usable constant.])
-  ])
-
-  for ac_def in $2; do
-    AC_MSG_CHECKING([$ac_def availability])
-    AC_TRY_COMPILE([$1], [
-int dummy = (int)$ac_def;
-    ], [
-      AC_MSG_RESULT([yes])
-      AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_$ac_def), 1)
-    ], [
-      AC_MSG_RESULT([no])
-    ])
-  done
-])
-
 AC_DEFUN([PAM_MYSQL_CHECK_IPV6], [
   ac_save_CFLAGS="$CFLAGS"
   CFLAGS="$INCLUDES $CFLAGS"
@@ -518,17 +444,3 @@ AC_DEFUN([PAM_MYSQL_CHECK_GETHOSTBYNAME_R], [
    
   CFLAGS="$ac_save_CFLAGS"
 ])
-
-AC_DEFUN([PAM_MYSQL_CHECK_NETWORK_LIBS], [
-  AC_CHECK_LIB([socket], [socket], [
-    LIBS="$LIBS -lsocket"
-  ], [], [-lnsl])
-
-  AC_CHECK_FUNC([gethostbyname], [
-    AC_CHECK_LIB([nsl], [gethostbyname], [
-      LIBS="$LIBS -lnsl"
-    ], [], [-lsocket])
-  ], [])
-])
-
-dnl vim600: sts=2 sw=2 ts=2 et

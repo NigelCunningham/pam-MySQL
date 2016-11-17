@@ -80,9 +80,7 @@
 #include <sys/socket.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
+#include <time.h>
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -153,8 +151,8 @@
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
-#include <pam_appl.h>
-#include <pam_modules.h>
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
 
 /* }}} */
 
@@ -1185,7 +1183,7 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s is directory", file);
           break;
 
-#ifdef HAVE_ELOOP
+#if HAVE_DECL_ELOOP
         case ELOOP:
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s refers to an inresolvable symbolic link", file);
           break;
@@ -1207,7 +1205,7 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "kernel resource exhausted");
           break;
 
-#ifdef HAVE_EOVERFLOW
+#if HAVE_DECL_EOVERFLOW
         case EOVERFLOW:
           syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s is too big", file);
           break;
@@ -3198,7 +3196,7 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
           char salt[33];
           salt[32]=0;
 
-          srandom(time());
+          srandom(time(NULL));
 
           int i;
           for(i=0;i<32; i++)

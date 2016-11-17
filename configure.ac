@@ -1,55 +1,26 @@
-dnl $Id: configure.in,v 1.6.2.7 2006/01/09 10:35:59 moriyoshi Exp $
-sinclude([pkg.m4])
-
-AC_PREREQ([2.57])
-AC_INIT(pam_mysql, 0.8)
-AM_INIT_AUTOMAKE
+AC_PREREQ([2.58])
+AC_INIT(pam-mysql, 0.8)
+AC_CONFIG_MACRO_DIR([m4])
+AM_INIT_AUTOMAKE([-Wall -Wno-extra-portability dist-xz no-dist-gzip])
 AC_CONFIG_SRCDIR(pam_mysql.c)
 AM_CONFIG_HEADER(config.h)
-AM_MAINTAINER_MODE
 
 AC_SUBST(PACKAGE_VERSION)
 AC_SUBST(PACKAGE_NAME)
-AC_SUBST(PACKAGE_TARNAME)
 
-enable_static="no"
-enable_shared="yes"
+LT_INIT([disable-static])
 
-AC_PROG_YACC
-AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
 
-AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netdb.h string.h strings.h sys/socket.h sys/types.h sys/stat.h sys/param.h fcntl.h syslog.h unistd.h stdarg.h errno.h crypt.h security/pam_appl.h])
-AC_CHECK_HEADERS([security/pam_appl.h], [CFLAGS="-I/usr/include/security $CLFAGS"])
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_C_INLINE
 AC_TYPE_SIZE_T
-AC_C_VOLATILE
-AC_C_STRINGIZE
-AC_TYPE_PID_T
+AC_CHECK_DECLS([ELOOP, EOVERFLOW],,,[[#include <errno.h>]])
+AC_SEARCH_LIBS([socket],[socket],,[AC_MSG_ERROR([unable to find the socket() function])])
+AC_CHECK_FUNCS([getaddrinfo])
 
-AC_FUNC_ALLOCA
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-PAM_MYSQL_CHECK_DEFINES([
-#include <errno.h>
-], [ELOOP EOVERFLOW])
-PAM_MYSQL_CHECK_NETWORK_LIBS
-AC_CHECK_FUNCS([inet_ntop getaddrinfo freeaddrinfo strcasecmp strdup])
 PAM_MYSQL_CHECK_IPV6
 PAM_MYSQL_CHECK_GETHOSTBYNAME_R
-
-AC_CHECK_SIZEOF([char])
-AC_CHECK_SIZEOF([short])
-AC_CHECK_SIZEOF([int])
-AC_CHECK_SIZEOF([long])
 
 AC_ARG_WITH([mysql], [  --with-mysql=PREFIX     specify MySQL installation prefix], [
   PAM_MYSQL_CHECK_LIBMYSQLCLIENT(["$withval"])
@@ -58,25 +29,14 @@ dnl try autodetection...
   PAM_MYSQL_CHECK_LIBMYSQLCLIENT([/usr /usr/local /usr/mysql /opt/mysql])
 ])
 
-AC_ARG_WITH([openssl], [  --with-openssl[[=PREFIX]] specify OpenSSL installation prefix], [
-  if test -z "$withval" -o "$withval" = "yes"; then
-    dnl try autodetection...
-    PKG_CHECK_MODULES([openssl], [openssl], [
-      AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])
-    ], [
-      PAM_MYSQL_CHECK_OPENSSL([/usr /usr/local /opt/openssl /opt/ssl /usr/ssl /usr/local/ssl], [
-        AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])
-      ],[])
-    ]) 
-  else
-    PAM_MYSQL_CHECK_OPENSSL(["$withval"], [
-      AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])
-    ], [])
-  fi
-], [])
+AC_ARG_WITH([openssl],
+    [AS_HELP_STRING([--with-openssl],[use the OpenSSL crypto provider @<:@default=check@:>@])],,
+    [with_openssl=check])
 
-CFLAGS="$CFLAGS $openssl_CFLAGS"
-LIBS="$LIBS $openssl_LIBS"
+AS_IF([test x"$with_openssl" != xno],
+    [PKG_CHECK_MODULES([openssl],[libcrypto],
+         [AC_DEFINE([HAVE_OPENSSL], [1], [Define to 1 if OpenSSL library is installed])],
+         [AS_IF([test "x$with_openssl" != xcheck],[AC_MSG_ERROR([Unable to find OpenSSL])])])])
 
 sasl_v2_avail=
 
@@ -141,12 +101,8 @@ AC_ARG_WITH([pam_mods_dir], [  --with-pam-mods-dir=DIR specify PAM module instal
 ])
 
 PAM_MYSQL_CHECK_MD5_HEADERS
-PAM_MYSQL_CHECK_CRYPT
+AC_SEARCH_LIBS([crypt],[crypt],,[AC_MSG_ERROR([unable to find the crypt() function])])
 
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT([pam_mysql.spec])
-AC_CONFIG_MACRO_DIRS([m4])
-
-dnl vim600: sts=2 sw=2 ts=2 et
-
