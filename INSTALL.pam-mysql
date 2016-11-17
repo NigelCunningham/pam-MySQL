@@ -1,8 +1,13 @@
-$Id: INSTALL,v 1.3 2005/06/13 10:21:55 moriyoshi Exp $
+Installation instructions.
+==========================
 
-Typical:
+The following instructions are for building from a fresh git checkout.
 
-1. Run "configure" script. The following parameters are accepted.
+Thanks go to "wferi" for assistance with the autotools side of things.
+
+1. Run autoreconf -f -i
+
+2. Run "configure" script. The following parameters are accepted.
 
     --with-pam=[PAM_INSTALLATION_PREFIX]
 
@@ -54,10 +59,14 @@ Typical:
         dependency and symbol conflict as PAM may be called from within
         a SASL client library.
 
-2. make install
+3. make distcheck to build the package and run checks.
+        
+4. make install
 
-3. Make proper changes to an intended configuration file in /etc/pam.d/
+5. Make proper changes to an intended configuration file in /etc/pam.d/
    or /etc/pam.conf.
+
+The following are historic instructions - I haven't checked they still work.
 
 Via RPM commands:
 
