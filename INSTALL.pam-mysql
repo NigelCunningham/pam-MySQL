@@ -1,13 +1,10 @@
 Installation instructions.
 ==========================
 
-The following instructions are for building from a fresh git checkout.
+1. Run "autoreconf -f -i". You can skip this step if you are building
+   from a distributed tarball and thus "configure" is already present.
 
-Thanks go to "wferi" for assistance with the autotools side of things.
-
-1. Run autoreconf -f -i
-
-2. Run "configure" script. The following parameters are accepted.
+2. Run "./configure". The following parameters are accepted:
 
     --with-pam=[PAM_INSTALLATION_PREFIX]
 
@@ -59,9 +56,9 @@ Thanks go to "wferi" for assistance with the autotools side of things.
         dependency and symbol conflict as PAM may be called from within
         a SASL client library.
 
-3. make distcheck to build the package and run checks.
+3. Run "make" to build the module.
         
-4. make install
+4. Run "make install" as root to install the module.
 
 5. Make proper changes to an intended configuration file in /etc/pam.d/
    or /etc/pam.conf.
