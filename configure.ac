@@ -104,5 +104,5 @@ PAM_MYSQL_CHECK_MD5_HEADERS
 AC_SEARCH_LIBS([crypt],[crypt],,[AC_MSG_ERROR([unable to find the crypt() function])])
 
 AC_SUBST(PAM_MODS_DIR)
-AC_CONFIG_FILES([Makefile])
-AC_OUTPUT([pam_mysql.spec])
+AC_CONFIG_FILES([Makefile pam_mysql.spec])
+AC_OUTPUT
