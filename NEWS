@@ -1,3 +1,9 @@
+Version 0.8 - 30 Nov 2016 - <nigel@nigelcunningham.com.au>
+
+* This release is the first in a new fork of the project. Previous maintainers
+  seem to have ceased activity not long after the last release. This version
+  includes a number of patches that have been applied in the meantime.
+
 Version 0.7-RC1   2006/1/10  <moriyoshi@users.sourceforge.net>
 
 * Add a option "disconnect_every_op" option that forces pam_mysql to
