@@ -118,7 +118,7 @@ AC_DEFUN([PAM_MYSQL_CHECK_PAM_CONSTS], [
 #include <pam_modules.h>
   ])
 
-  CPPFLAGS="$ac_save_CFLAGS"
+  CPPFLAGS="$ac_save_CPPFLAGS"
 ])
 
 AC_DEFUN([PAM_MYSQL_CHECK_PAM], [
