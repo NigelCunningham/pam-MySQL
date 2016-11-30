@@ -5,7 +5,7 @@ pamexec_LTLIBRARIES = pam_mysql.la
 pam_mysql_la_SOURCES = pam_mysql.c
 pam_mysql_la_LDFLAGS = -module -avoid-version
 pam_mysql_la_CPPFLAGS = $(openssl_CFLAGS)
-pam_mysql_la_LIBADD   = $(openssl_LIBS)
+pam_mysql_la_LIBADD   = $(openssl_LIBS) -lpam
 
 EXTRA_DIST = \
 	INSTALL.pam-mysql \
