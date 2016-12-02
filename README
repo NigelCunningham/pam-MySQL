@@ -261,7 +261,7 @@ BUGS
 ----
 Beware that user names and clear text passwords may be syslogged
 if you explicitly configured PAM-MySQL to log select statements (verbose=1).
-(Not sure why you want to anyway, slogs your system down badly!)
+(Not sure why you want to anyway, slows your system down badly!)
 
 Q&A
 ---
