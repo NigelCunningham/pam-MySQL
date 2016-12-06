@@ -837,6 +837,8 @@ static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, c
   }
   memcpy(md, hashed, strlen(hashed));
   xfree(hashed);
+
+  return md;
 }
 #endif
 /* }}} */
