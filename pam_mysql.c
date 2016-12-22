@@ -168,6 +168,39 @@
 #define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
 #endif
 
+#ifndef my_make_scrambled_password
+#include "crypto.h"
+#include "crypto-sha1.h"
+
+// Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
+static void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len)
+{
+	SHA1_CTX      ctx;
+	unsigned char h0[20], h1[20];
+
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, password, strlen(password));
+	SHA1Final(h0, &ctx);
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, h0, sizeof h0);
+# ifdef HAVE_EXPLICIT_BZERO
+    explicit_bzero(h0, len);
+# else
+    volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
+    size_t                     i = (size_t) 0U;
+
+    while (i < len) {
+        pnt_[i++] = 0U;
+    }
+# endif
+
+	SHA1Final(h1, &ctx);
+	*scrambled_password = '*';
+	hexify(scrambled_password + 1U, h1,
+			42, sizeof h1);
+}
+#endif
+
 #define PAM_MODULE_NAME  "pam_mysql"
 #define PAM_MYSQL_LOG_PREFIX PAM_MODULE_NAME " - "
 #define PLEASE_ENTER_PASSWORD "Password:"
