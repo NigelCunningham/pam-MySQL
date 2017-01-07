@@ -3,7 +3,7 @@ AC_INIT(pam-mysql, 0.8)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Wno-extra-portability dist-xz no-dist-gzip])
 AC_CONFIG_SRCDIR(pam_mysql.c)
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 AC_SUBST(PACKAGE_VERSION)
 AC_SUBST(PACKAGE_NAME)
