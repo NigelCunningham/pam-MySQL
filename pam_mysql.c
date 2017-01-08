@@ -175,29 +175,29 @@
 // Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
 static void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len)
 {
-	SHA1_CTX      ctx;
-	unsigned char h0[20], h1[20];
+  SHA1_CTX      ctx;
+  unsigned char h0[20], h1[20];
 
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, password, strlen(password));
-	SHA1Final(h0, &ctx);
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, h0, sizeof h0);
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, password, strlen(password));
+  SHA1Final(h0, &ctx);
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, h0, sizeof h0);
 # ifdef HAVE_EXPLICIT_BZERO
-    explicit_bzero(h0, len);
+  explicit_bzero(h0, len);
 # else
-    volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
-    size_t                     i = (size_t) 0U;
+  volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
+  size_t                     i = (size_t) 0U;
 
-    while (i < len) {
-        pnt_[i++] = 0U;
-    }
+  while (i < len) {
+    pnt_[i++] = 0U;
+  }
 # endif
 
-	SHA1Final(h1, &ctx);
-	*scrambled_password = '*';
-	hexify(scrambled_password + 1U, h1,
-			42, sizeof h1);
+  SHA1Final(h1, &ctx);
+  *scrambled_password = '*';
+  hexify(scrambled_password + 1U, h1,
+      42, sizeof h1);
 }
 #endif
 
@@ -510,45 +510,45 @@ static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
       return buf_end;
 
     case 1: {
-        unsigned char c = delims[0];
+              unsigned char c = delims[0];
 
-        for (p = (unsigned char *)buf; p < buf_end; p++) {
-          if (*p != c) {
-            return (void *)p;
-          }
-        }
-      } break;
+              for (p = (unsigned char *)buf; p < buf_end; p++) {
+                if (*p != c) {
+                  return (void *)p;
+                }
+              }
+            } break;
 
     case 2: {
-        unsigned char c1 = delims[0], c2 = delims[1];
+              unsigned char c1 = delims[0], c2 = delims[1];
 
-        for (p = (unsigned char *)buf; p < buf_end; p++) {
-          if (*p != c1 && *p != c2) {
-            return (void *)p;
-          }
-        }
-      } break;
+              for (p = (unsigned char *)buf; p < buf_end; p++) {
+                if (*p != c1 && *p != c2) {
+                  return (void *)p;
+                }
+              }
+            } break;
 
     default: {
-         const unsigned char *delims_end = delims + ndelims;
-         unsigned char and_mask = ~0, or_mask = 0;
-         const unsigned char *q;
+               const unsigned char *delims_end = delims + ndelims;
+               unsigned char and_mask = ~0, or_mask = 0;
+               const unsigned char *q;
 
-         for (q = delims; q < delims_end; q++) {
-           and_mask &= *q;
-           or_mask |= *q;
-         }
-
-         for (p = (unsigned char *)buf; p < buf_end; p++) {
-           if ((*p & and_mask) == and_mask && (*p & or_mask) != 0) {
-             for (q = delims; *p != *q; q++) {
-               if (q >= delims_end) {
-                 return (void *)p;
+               for (q = delims; q < delims_end; q++) {
+                 and_mask &= *q;
+                 or_mask |= *q;
                }
-             }
-           }
-         }
-       } break;
+
+               for (p = (unsigned char *)buf; p < buf_end; p++) {
+                 if ((*p & and_mask) == and_mask && (*p & or_mask) != 0) {
+                   for (q = delims; *p != *q; q++) {
+                     if (q >= delims_end) {
+                       return (void *)p;
+                     }
+                   }
+                 }
+               }
+             } break;
   }
 
   return NULL;
@@ -904,7 +904,7 @@ static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval
 /* }}} */
 
 /* {{{ pam_mysql_boolean_opt_getter
- */
+*/
 static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pretval, int *to_release)
 {
   *pretval = (*(int *)val ? "true": "false");
@@ -1802,8 +1802,8 @@ static pam_mysql_err_t pam_mysql_config_parser_parse(
           case PAM_MYSQL_CONFIG_TOKEN_SEMICOLON:
             if (parser->hdlr &&
                 (err = parser->hdlr->handle_entry_fn(
-                             parser->hdlr, line_num, name, name_len,
-                             "", 0))) {
+                                                     parser->hdlr, line_num, name, name_len,
+                                                     "", 0))) {
               goto out;
             }
             state = 4;
@@ -1812,8 +1812,8 @@ static pam_mysql_err_t pam_mysql_config_parser_parse(
           case PAM_MYSQL_CONFIG_TOKEN_NEWLINE:
             if (parser->hdlr &&
                 (err = parser->hdlr->handle_entry_fn(
-                             parser->hdlr, line_num, name, name_len,
-                             "", 0))) {
+                                                     parser->hdlr, line_num, name, name_len,
+                                                     "", 0))) {
               goto out;
             }
             line_num++;
@@ -1839,8 +1839,8 @@ static pam_mysql_err_t pam_mysql_config_parser_parse(
 
             if (parser->hdlr &&
                 (err = parser->hdlr->handle_entry_fn(
-                             parser->hdlr, line_num, name, name_len,
-                             value, value_len))) {
+                                                     parser->hdlr, line_num, name, name_len,
+                                                     value, value_len))) {
               goto out;
             }
             state = 3;
@@ -1913,7 +1913,7 @@ out:
 /* }}} */
 
 /* {{{ pam_mysql_find_option()
- */
+*/
 pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
     const char *name, size_t name_len)
 {
@@ -2206,7 +2206,7 @@ static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
 }
 
 /* {{{ pam_mysql_init_ctx()
- */
+*/
 static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
 {
   ctx->mysql_hdl = NULL;
@@ -2332,7 +2332,7 @@ static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int stat
 /* }}} */
 
 /* {{{ pam_mysql_retrieve_ctx()
- */
+*/
 pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh)
 {
   pam_mysql_err_t err;
@@ -2379,7 +2379,7 @@ pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *
 /* }}} */
 
 /* {{{ pam_mysql_set_option()
- */
+*/
 pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, size_t name_len, const char *val)
 {
   pam_mysql_option_t *opt = pam_mysql_find_option(options, name, name_len);
@@ -2399,7 +2399,7 @@ pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, siz
 /* }}} */
 
 /* {{{ pam_mysql_get_option()
- */
+*/
 pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval, int *to_release, const char *name, size_t name_len)
 {
   pam_mysql_option_t *opt = pam_mysql_find_option(options, name, name_len);
@@ -2419,7 +2419,7 @@ pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval,
 /* }}} */
 
 /* {{{ pam_mysql_parse_args()
- */
+*/
 pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char **argv)
 {
   pam_mysql_err_t err;
@@ -2501,7 +2501,7 @@ static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
 /* }}} */
 
 /* {{{ pam_mysql_open_db()
- */
+*/
 static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *ctx)
 {
   pam_mysql_err_t err;
@@ -2593,7 +2593,7 @@ out:
 /* }}} */
 
 /* {{{ pam_mysql_close_db()
- */
+*/
 static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
 {
   if (ctx->verbose) {
@@ -2614,7 +2614,7 @@ static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
 /* }}} */
 
 /* {{{ pam_mysql_quick_escape()
- */
+*/
 static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_str_t *append_to, const char *val, size_t val_len)
 {
   size_t len;
@@ -2681,58 +2681,58 @@ static pam_mysql_err_t pam_mysql_format_string(pam_mysql_ctx_t *ctx,
             break;
 
           case 's': {
-                const char *val = va_arg(ap, char *);
+                      const char *val = va_arg(ap, char *);
 
-                if ((err = pam_mysql_quick_escape(ctx, pretval, val, strlen(val)))) {
-                  goto out;
-                }
+                      if ((err = pam_mysql_quick_escape(ctx, pretval, val, strlen(val)))) {
+                        goto out;
+                      }
 
-                state = 0;
-                commit_ptr = p + 1;
-              } break;
+                      state = 0;
+                      commit_ptr = p + 1;
+                    } break;
 
           case 'S': {
-                const char *val = va_arg(ap, char *);
+                      const char *val = va_arg(ap, char *);
 
-                if ((err = pam_mysql_str_append(pretval, val, strlen(val)))) {
-                  goto out;
-                }
+                      if ((err = pam_mysql_str_append(pretval, val, strlen(val)))) {
+                        goto out;
+                      }
 
-                state = 0;
-                commit_ptr = p + 1;
-              } break;
+                      state = 0;
+                      commit_ptr = p + 1;
+                    } break;
 
           case 'u': {
-                char buf[128];
-                unsigned int val = va_arg(ap, unsigned int);
-                char *q = buf + sizeof(buf);
+                      char buf[128];
+                      unsigned int val = va_arg(ap, unsigned int);
+                      char *q = buf + sizeof(buf);
 
-                while (--q >= buf) {
-                  *q = "0123456789"[val % 10];
-                  val /= 10;
-                  if (val == 0) break;
-                }
+                      while (--q >= buf) {
+                        *q = "0123456789"[val % 10];
+                        val /= 10;
+                        if (val == 0) break;
+                      }
 
-                if ((err = pam_mysql_str_append(pretval, q, sizeof(buf) - (size_t)(q - buf)))) {
-                  goto out;
-                }
+                      if ((err = pam_mysql_str_append(pretval, q, sizeof(buf) - (size_t)(q - buf)))) {
+                        goto out;
+                      }
 
-                state = 0;
-                commit_ptr = p + 1;
-              } break;
+                      state = 0;
+                      commit_ptr = p + 1;
+                    } break;
 
           default:
-              if ((err = pam_mysql_str_append_char(pretval, '%'))) {
-                goto out;
-              }
+                    if ((err = pam_mysql_str_append_char(pretval, '%'))) {
+                      goto out;
+                    }
 
-              if ((err = pam_mysql_str_append_char(pretval, *p))) {
-                goto out;
-              }
+                    if ((err = pam_mysql_str_append_char(pretval, *p))) {
+                      goto out;
+                    }
 
-              state = 0;
-              commit_ptr = p + 1;
-              break;
+                    state = 0;
+                    commit_ptr = p + 1;
+                    break;
         }
         break;
 
@@ -2824,7 +2824,7 @@ out:
 /* }}} */
 
 /* {{{ pam_mysql_check_passwd
- */
+*/
 static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
     const char *user, const char *passwd, int null_inhibited)
 {
@@ -2920,111 +2920,111 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 
             /* PASSWORD */
           case 2: {
-              char buf[42];
+                    char buf[42];
 #ifdef HAVE_MAKE_SCRAMBLED_PASSWORD_323
-              if (ctx->use_323_passwd) {
-                make_scrambled_password_323(buf, passwd);
-              } else {
-                my_make_scrambled_password(buf, passwd, strlen(passwd));
-              }
+                    if (ctx->use_323_passwd) {
+                      make_scrambled_password_323(buf, passwd);
+                    } else {
+                      my_make_scrambled_password(buf, passwd, strlen(passwd));
+                    }
 #else
-              my_make_scrambled_password(buf, passwd, strlen(passwd));
+                    my_make_scrambled_password(buf, passwd, strlen(passwd));
 #endif
 
-              vresult = strcmp(row[0], buf);
-              {
-                char *p = buf - 1;
-                while (*(++p)) *p = '\0';
-              }
-            } break;
+                    vresult = strcmp(row[0], buf);
+                    {
+                      char *p = buf - 1;
+                      while (*(++p)) *p = '\0';
+                    }
+                  } break;
 
-            /* MD5 hash (not MD5 crypt()) */
+                  /* MD5 hash (not MD5 crypt()) */
           case 3: {
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
-              char buf[33];
-              pam_mysql_md5_data((unsigned char*)passwd, strlen(passwd),
-                  buf);
-              vresult = strcmp(row[0], buf);
-              {
-                char *p = buf - 1;
-                while (*(++p)) *p = '\0';
-              }
+                    char buf[33];
+                    pam_mysql_md5_data((unsigned char*)passwd, strlen(passwd),
+                        buf);
+                    vresult = strcmp(row[0], buf);
+                    {
+                      char *p = buf - 1;
+                      while (*(++p)) *p = '\0';
+                    }
 #else
-              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+                    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
 #endif
-            } break;
+                  } break;
 
           case 4: {
 #ifdef HAVE_PAM_MYSQL_SHA1_DATA
-              char buf[41];
-              pam_mysql_sha1_data((unsigned char*)passwd, strlen(passwd),
-                  buf);
-              vresult = strcmp(row[0], buf);
-              {
-                char *p = buf - 1;
-                while (*(++p)) *p = '\0';
-              }
+                    char buf[41];
+                    pam_mysql_sha1_data((unsigned char*)passwd, strlen(passwd),
+                        buf);
+                    vresult = strcmp(row[0], buf);
+                    {
+                      char *p = buf - 1;
+                      while (*(++p)) *p = '\0';
+                    }
 #else
-              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 hash is not supported in this build.");
+                    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 hash is not supported in this build.");
 #endif
-            } break;
+                  } break;
 
           case 5: {
 #if defined(HAVE_PAM_MYSQL_MD5_DATA) && defined(HAVE_PAM_MYSQL_SHA1_DATA)
-              char buf[128];
-              memset(buf, 0, 128);
-              pam_mysql_drupal7_data((unsigned char*)passwd, strlen(passwd),
-                  buf, row[0]);
-              vresult = strcmp(row[0], buf);
-              {
-                char *p = buf - 1;
-                while (*(++p)) *p = '\0';
-              }
+                    char buf[128];
+                    memset(buf, 0, 128);
+                    pam_mysql_drupal7_data((unsigned char*)passwd, strlen(passwd),
+                        buf, row[0]);
+                    vresult = strcmp(row[0], buf);
+                    {
+                      char *p = buf - 1;
+                      while (*(++p)) *p = '\0';
+                    }
 #else
-              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash or SHA support lacking in this build.");
+                    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash or SHA support lacking in this build.");
 #endif
-            } break;
+                  } break;
 
-            /* joomla 1.5 like passwd*/
+                  /* joomla 1.5 like passwd*/
           case 6:
-            {
-              /* Joomla 1.5 like password */
+                  {
+                    /* Joomla 1.5 like password */
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
-              char buf[33];
-              buf[32]=0;
+                    char buf[33];
+                    buf[32]=0;
 
-              char *salt = row[0];
-              char *hash = strsep(&salt,":");
+                    char *salt = row[0];
+                    char *hash = strsep(&salt,":");
 
-              int len = strlen(passwd)+strlen(salt);
+                    int len = strlen(passwd)+strlen(salt);
 
-              char *tmp;
+                    char *tmp;
 
-              if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
-                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                err = PAM_MYSQL_ERR_ALLOC;
-                goto out;
-              }
+                    if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
+                      syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                      err = PAM_MYSQL_ERR_ALLOC;
+                      goto out;
+                    }
 
-              strcat(tmp,passwd);
-              strcat(tmp,salt);
+                    strcat(tmp,passwd);
+                    strcat(tmp,salt);
 
-              pam_mysql_md5_data((unsigned char*)tmp, len, buf);
+                    pam_mysql_md5_data((unsigned char*)tmp, len, buf);
 
-              vresult = strcmp(hash, buf);
-              {
-                char *p = buf - 1;
-                while (*(++p)) *p = '\0';
-              }
+                    vresult = strcmp(hash, buf);
+                    {
+                      char *p = buf - 1;
+                      while (*(++p)) *p = '\0';
+                    }
 
-              xfree(tmp);
+                    xfree(tmp);
 #else
-              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+                    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
 #endif
-            } break;
+                  } break;
 
           default: {
-             }
+                   }
         }
       }
     } else {
@@ -3151,112 +3151,112 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
         break;
 
       case 1: {
-          char salt[18];
-          pam_mysql_saltify(ctx, salt, new_passwd);
-          if (NULL == (encrypted_passwd = xstrdup(crypt(new_passwd, salt)))) {
-            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-            err = PAM_MYSQL_ERR_ALLOC;
-            goto out;
-          }
-        } break;
+                char salt[18];
+                pam_mysql_saltify(ctx, salt, new_passwd);
+                if (NULL == (encrypted_passwd = xstrdup(crypt(new_passwd, salt)))) {
+                  syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                  err = PAM_MYSQL_ERR_ALLOC;
+                  goto out;
+                }
+              } break;
 
       case 2:
-        if (NULL == (encrypted_passwd = xcalloc(41 + 1, sizeof(char)))) {
-          syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          err = PAM_MYSQL_ERR_ALLOC;
-          goto out;
-        }
+              if (NULL == (encrypted_passwd = xcalloc(41 + 1, sizeof(char)))) {
+                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                err = PAM_MYSQL_ERR_ALLOC;
+                goto out;
+              }
 #ifdef HAVE_MAKE_SCRAMBLED_PASSWORD_323
-        if (ctx->use_323_passwd) {
-          make_scrambled_password_323(encrypted_passwd, new_passwd);
-        } else {
-          my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
-        }
+              if (ctx->use_323_passwd) {
+                make_scrambled_password_323(encrypted_passwd, new_passwd);
+              } else {
+                my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+              }
 #else
-        my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+              my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
 #endif
-        break;
+              break;
 
       case 3:
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
-        if (NULL == (encrypted_passwd = xcalloc(32 + 1, sizeof(char)))) {
-          syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          err = PAM_MYSQL_ERR_ALLOC;
-          goto out;
-        }
-        pam_mysql_md5_data((unsigned char*)new_passwd,
-            strlen(new_passwd), encrypted_passwd);
+              if (NULL == (encrypted_passwd = xcalloc(32 + 1, sizeof(char)))) {
+                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                err = PAM_MYSQL_ERR_ALLOC;
+                goto out;
+              }
+              pam_mysql_md5_data((unsigned char*)new_passwd,
+                  strlen(new_passwd), encrypted_passwd);
 #else
-        syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
-        err = PAM_MYSQL_ERR_NOTIMPL;
-        goto out;
+              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+              err = PAM_MYSQL_ERR_NOTIMPL;
+              goto out;
 #endif
-        break;
+              break;
 
       case 4:
 #ifdef HAVE_PAM_MYSQL_SHA1_DATA
-        if (NULL == (encrypted_passwd = xcalloc(40 + 1, sizeof(char)))) {
-          syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          err = PAM_MYSQL_ERR_ALLOC;
-          goto out;
-        }
-        pam_mysql_sha1_data((unsigned char*)new_passwd,
-            strlen(new_passwd), encrypted_passwd);
+              if (NULL == (encrypted_passwd = xcalloc(40 + 1, sizeof(char)))) {
+                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                err = PAM_MYSQL_ERR_ALLOC;
+                goto out;
+              }
+              pam_mysql_sha1_data((unsigned char*)new_passwd,
+                  strlen(new_passwd), encrypted_passwd);
 #else
-        syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 hash is not supported in this build.");
-        err = PAM_MYSQL_ERR_NOTIMPL;
-        goto out;
+              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 hash is not supported in this build.");
+              err = PAM_MYSQL_ERR_NOTIMPL;
+              goto out;
 #endif
-        break;
+              break;
 
       case 6:
-        {
+              {
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
-          if (NULL == (encrypted_passwd = xcalloc(32 + 1+ 32 +1, sizeof(char)))) {
-            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-            err = PAM_MYSQL_ERR_ALLOC;
-            goto out;
-          }
+                if (NULL == (encrypted_passwd = xcalloc(32 + 1+ 32 +1, sizeof(char)))) {
+                  syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                  err = PAM_MYSQL_ERR_ALLOC;
+                  goto out;
+                }
 
-          int len=strlen(new_passwd)+32;
+                int len=strlen(new_passwd)+32;
 
-          char *tmp;
+                char *tmp;
 
-          if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
-            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-            err = PAM_MYSQL_ERR_ALLOC;
-            goto out;
-          }
+                if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
+                  syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                  err = PAM_MYSQL_ERR_ALLOC;
+                  goto out;
+                }
 
-          char salt[33];
-          salt[32]=0;
+                char salt[33];
+                salt[32]=0;
 
-          srandom(time(NULL));
+                srandom(time(NULL));
 
-          int i;
-          for(i=0;i<32; i++)
-            salt[i]=(char)((random()/(double)RAND_MAX * 93.0) +33.0);
+                int i;
+                for(i=0;i<32; i++)
+                  salt[i]=(char)((random()/(double)RAND_MAX * 93.0) +33.0);
 
-          strcat(tmp,new_passwd);
-          strcat(tmp,salt);
+                strcat(tmp,new_passwd);
+                strcat(tmp,salt);
 
-          pam_mysql_md5_data((unsigned char*)tmp, len, encrypted_passwd);
+                pam_mysql_md5_data((unsigned char*)tmp, len, encrypted_passwd);
 
-          xfree(tmp);
+                xfree(tmp);
 
-          strcat(encrypted_passwd,":");
-          strcat(encrypted_passwd,salt);
+                strcat(encrypted_passwd,":");
+                strcat(encrypted_passwd,salt);
 
 #else
-          syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
-          err = PAM_MYSQL_ERR_NOTIMPL;
-          goto out;
+                syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+                err = PAM_MYSQL_ERR_NOTIMPL;
+                goto out;
 #endif
-          break;
-        }
+                break;
+              }
       default:
-        encrypted_passwd = NULL;
-        break;
+              encrypted_passwd = NULL;
+              break;
     }
   }
 
@@ -3396,7 +3396,7 @@ out:
   /* }}} */
 
 /* {{{ pam_mysql_sql_log()
- */
+*/
 static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *ctx, const char *msg, const char *user, const char *rhost)
 {
   pam_mysql_err_t err;
@@ -3495,7 +3495,7 @@ out:
   /* }}} */
 
 /* {{{ pam_mysql_converse()
- */
+*/
 static pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
     pam_handle_t *pamh, size_t nargs, ...) 
 {
@@ -3642,7 +3642,7 @@ static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *ctx,
 
 /* {{{ PAM Authentication services */
 /* {{{ pam_sm_authenticate
- */
+*/
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     int argc, const char **argv)
 {
@@ -3890,7 +3890,7 @@ out:
 /* }}} */
 
 /* {{{ pam_sm_acct_mgmt
- */
+*/
 PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags, int argc,
     const char **argv)
 {
@@ -4033,7 +4033,7 @@ out:
 /* }}} */
 
 /* {{{ pam_sm_setcred
- */
+*/
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
     const char **argv)
 {
@@ -4045,7 +4045,7 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
 /* }}} */
 
 /* {{{ pam_sm_chauthtok
- */
+*/
 PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
     const char **argv)
 {
@@ -4426,7 +4426,7 @@ out:
 /* }}} */
 
 /* {{{ pam_sm_open_session
- */
+*/
 PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
     const char **argv)
 {
@@ -4529,7 +4529,7 @@ out:
 /* }}} */
 
 /* {{{ pam_sm_close_session
- */
+*/
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
     const char **argv)
 {
