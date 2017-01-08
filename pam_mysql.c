@@ -4,36 +4,36 @@
  * Copyright (C) 1998-2005 Gunay Arslan and the contributors.
  * Copyright (C) 2015-2017 Nigel Cunningham and contributors.
  * All rights reserved.
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * Original Version written by: Gunay ARSLAN <arslan@gunes.medyatext.com.tr>
  * This version by: James O'Kane <jo2y@midnightlinux.com>
  * Modifications by Steve Brown, <steve@electronic.co.uk>
- *      B.J. Black, <bj@taos.com>
- *      Kyle Smith, <kyle@13th-floor.org>
+ * B.J. Black, <bj@taos.com>
+ * Kyle Smith, <kyle@13th-floor.org>
  * Patch integration by Moriyoshi Koizumi, <moriyoshi@at.wakwak.com>,
  * based on the patches by the following contributors:
- *        Paul Bryan (check_acct_mgmt service support)
- *        Kev Green (Documentation, UNIX socket option)
- *        Kees Cook (Misc. clean-ups and more)
- *        Fredrik Rambris (RPM spec file)
- *        Peter E. Stokke (chauthtok service support)
- *        Sergey Matveychuk (OpenPAM support)
+ * Paul Bryan (check_acct_mgmt service support)
+ * Kev Green (Documentation, UNIX socket option)
+ * Kees Cook (Misc. clean-ups and more)
+ * Fredrik Rambris (RPM spec file)
+ * Peter E. Stokke (chauthtok service support)
+ * Sergey Matveychuk (OpenPAM support)
  * Package unmaintained for some years; now taken care of by Nigel Cunningham
- *   https://github.com/NigelCunningham/pam-MySQL
+ * https://github.com/NigelCunningham/pam-MySQL
  */
 
 #define _GNU_SOURCE
@@ -46,8 +46,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
-/* {{{ includes */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,10 +138,10 @@
 #endif
 
 /*
- * here, we make definitions for the externally accessible functions
+ * We make definitions for the externally accessible functions
  * in this file (these definitions are required for static modules
- * but strongly encouraged generally) they are used to instruct the
- * modules include file to define their prototypes.
+ * but strongly encouraged generally). They are used to instruct the
+ * modules' include files to define their prototypes.
  */
 
 #define PAM_SM_AUTH
@@ -153,8 +151,6 @@
 
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
-
-/* }}} */
 
 #ifndef PAM_EXTERN
 #define PAM_EXTERN
@@ -175,7 +171,7 @@
 // Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
 static void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len)
 {
-  SHA1_CTX      ctx;
+  SHA1_CTX ctx;
   unsigned char h0[20], h1[20];
 
   SHA1Init(&ctx);
@@ -183,32 +179,30 @@ static void my_make_scrambled_password(char scrambled_password[42], const char p
   SHA1Final(h0, &ctx);
   SHA1Init(&ctx);
   SHA1Update(&ctx, h0, sizeof h0);
-# ifdef HAVE_EXPLICIT_BZERO
+#ifdef HAVE_EXPLICIT_BZERO
   explicit_bzero(h0, len);
-# else
+#else
   volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
-  size_t                     i = (size_t) 0U;
+  size_t i = (size_t) 0U;
 
   while (i < len) {
     pnt_[i++] = 0U;
   }
-# endif
+#endif
 
   SHA1Final(h1, &ctx);
   *scrambled_password = '*';
-  hexify(scrambled_password + 1U, h1,
-      42, sizeof h1);
+  hexify(scrambled_password + 1U, h1, 42, sizeof h1);
 }
 #endif
 
-#define PAM_MODULE_NAME  "pam_mysql"
+#define PAM_MODULE_NAME "pam_mysql"
 #define PAM_MYSQL_LOG_PREFIX PAM_MODULE_NAME " - "
 #define PLEASE_ENTER_PASSWORD "Password:"
-#define PLEASE_ENTER_OLD_PASSWORD "(Current) Password:"
-#define PLEASE_ENTER_NEW_PASSWORD "(New) Password:"
-#define PLEASE_REENTER_NEW_PASSWORD "Retype (New) Password:"
+#define PLEASE_ENTER_OLD_PASSWORD "Current password:"
+#define PLEASE_ENTER_NEW_PASSWORD "New password:"
+#define PLEASE_REENTER_NEW_PASSWORD "Retype new Password:"
 
-/* {{{ consts  */
 enum _pam_mysql_err_t {
   PAM_MYSQL_ERR_SUCCESS = 0,
   PAM_MYSQL_ERR_UNKNOWN = -1,
@@ -233,16 +227,13 @@ enum _pam_mysql_config_token_t {
   PAM_MYSQL_CONFIG_TOKEN__LAST
 };
 
-#define PAM_MYSQL_USER_STAT_EXPIRED         0x0001
+#define PAM_MYSQL_USER_STAT_EXPIRED 0x0001
 #define PAM_MYSQL_USER_STAT_AUTHTOK_EXPIRED 0x0002
-#define PAM_MYSQL_USER_STAT_NULL_PASSWD     0x0004
+#define PAM_MYSQL_USER_STAT_NULL_PASSWD 0x0004
 
-#define PAM_MYSQL_CAP_CHAUTHTOK_SELF    0x0001
-#define PAM_MYSQL_CAP_CHAUTHTOK_OTHERS    0x0002
-/* }}} */
+#define PAM_MYSQL_CAP_CHAUTHTOK_SELF 0x0001
+#define PAM_MYSQL_CAP_CHAUTHTOK_OTHERS 0x0002
 
-/* {{{ typedefs */
-/* {{{ typedef struct pam_mysql_ctx_t */
 typedef struct _pam_mysql_ctx_t {
   MYSQL *mysql_hdl;
   char *host;
@@ -273,73 +264,51 @@ typedef struct _pam_mysql_ctx_t {
   char *config_file;
   char *my_host_info;
 } pam_mysql_ctx_t; /*Max length for most MySQL fields is 16 */
-/* }}} */
 
-/* {{{ typedef enum pam_mysql_err_t */
 typedef enum _pam_mysql_err_t pam_mysql_err_t;
-/* }}} */
 
-/* {{{ typedef enum pam_mysql_config_token_t */
 typedef enum _pam_mysql_config_token_t pam_mysql_config_token_t;
-/* }}} */
 
-/* {{{ typedef (func) pam_mysql_option_getter_t */
 typedef int(*pam_mysql_option_getter_t)(void *val, const char **pretval, int *to_release);
-/* }}} */
 
-/* {{{ typedef (func) pam_mysql_option_setter_t */
 typedef int(*pam_mysql_option_setter_t)(void *val, const char *newval_str);
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_option_accessor_t */
 typedef struct _pam_mysql_option_accessor_t {
   pam_mysql_option_getter_t get_op;
   pam_mysql_option_setter_t set_op;
 } pam_mysql_option_accessor_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_option_t */
 typedef struct _pam_mysql_option_t {
   const char *name;
   size_t name_len;
   size_t offset;
   pam_mysql_option_accessor_t *accessor;
 } pam_mysql_option_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_str_t */
 typedef struct _pam_mysql_str_t {
   char *p;
   size_t len;
   size_t alloc_size;
   int mangle;
 } pam_mysql_str_t;
-/* }}} */
 
-/* {{{ typedef (func) pam_mysql_handle_entry_fn_t */
 struct _pam_mysql_entry_handler_t;
 
 typedef pam_mysql_err_t (*pam_mysql_handle_entry_fn_t)(
     struct _pam_mysql_entry_handler_t *, int, const char *, size_t,
     const char *, size_t);
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_entry_handler_t */
 typedef struct _pam_mysql_entry_handler_t {
   pam_mysql_ctx_t *ctx;
   pam_mysql_handle_entry_fn_t handle_entry_fn;
   pam_mysql_option_t *options;
 } pam_mysql_entry_handler_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_config_parser_t */
 typedef struct _pam_mysql_config_parser_t {
   pam_mysql_ctx_t *ctx;
   pam_mysql_entry_handler_t *hdlr;
 } pam_mysql_config_parser_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_stream_t */
 typedef struct _pam_mysql_stream_t {
   int fd;
   unsigned char buf[2][2048];
@@ -350,9 +319,7 @@ typedef struct _pam_mysql_stream_t {
   size_t buf_in_use;
   int eof;
 } pam_mysql_stream_t;
-/* }}} */
 
-/* {{{ typedef struct _pam_mysql_config_scanner_t */
 typedef struct _pam_mysql_config_scanner_t {
   pam_mysql_ctx_t *ctx;
   pam_mysql_str_t image;
@@ -360,29 +327,22 @@ typedef struct _pam_mysql_config_scanner_t {
   pam_mysql_stream_t *stream;
   int state;
 } pam_mysql_config_scanner_t;
-/* }}} */
-/* }}} */
 
-/* {{{ prototypes */
-/* {{{ General PAM Prototypes */
-PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
-    int flags, int argc, const char **argv);
-PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc,
+PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     const char **argv);
-PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
-    const char **argv);
-PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
-    const char **argv);
+PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const
+    char **argv);
+PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const
+    char **argv);
+PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const
+    char **argv);
 PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
     const char **argv);
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
     const char **argv);
-/* }}} */
 
-/* {{{ static prototypes */ 
 static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int status);
 
-/* {{{ pam_mysql methods */
 static pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh);
 
 static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *);
@@ -391,29 +351,25 @@ static void pam_mysql_saltify(pam_mysql_ctx_t *, char *salt, const char *salter 
 static pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *, int argc, const char **argv);
 static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *);
 static void pam_mysql_close_db(pam_mysql_ctx_t *);
-static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
-    const char *user, const char *passwd, int null_inhibited);
-static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *,
-    const char *user, const char *new_passwd);
-static pam_mysql_err_t pam_mysql_query_user_stat(pam_mysql_ctx_t *,
-    int *pretval, const char *user);
-static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *,
-    int *pretval, const char *user);
+static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx, const char
+    *user, const char *passwd, int null_inhibited);
+static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *, const char
+    *user, const char *new_passwd);
+static pam_mysql_err_t pam_mysql_query_user_stat(pam_mysql_ctx_t *, int
+    *pretval, const char *user);
+static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *, int
+    *pretval, const char *user);
 static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *, const char *msg,
     const char *user, const char *host);
-static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *,
-    const char **pretval);
-/* }}} */
+static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *, const char
+    **pretval);
 
 static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len);
 static void *xcalloc(size_t nmemb, size_t size);
 static char *xstrdup(const char *ptr);
 static void xfree(void *ptr);
 static void xfree_overwrite(char *ptr);
-/* }}} */
-/* }}} */
 
-/* {{{ strnncpy */
 static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len)
 {
   size_t cpy_len;
@@ -426,9 +382,7 @@ static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src
 
   return cpy_len;
 }
-/* }}} */
 
-/* {{{ xcalloc */
 static void *xcalloc(size_t nmemb, size_t size)
 {
   void *retval;
@@ -442,9 +396,7 @@ static void *xcalloc(size_t nmemb, size_t size)
 
   return retval;
 }
-/* }}} */
 
-/* {{{ xrealloc */
 static void *xrealloc(void *ptr, size_t nmemb, size_t size)
 {
   void *retval;
@@ -458,9 +410,7 @@ static void *xrealloc(void *ptr, size_t nmemb, size_t size)
 
   return retval;
 }
-/* }}} */
 
-/* {{{ xstrdup */
 static char *xstrdup(const char *ptr)
 {
   size_t len = strlen(ptr) + sizeof(char);
@@ -474,18 +424,14 @@ static char *xstrdup(const char *ptr)
 
   return retval;
 }
-/* }}} */
 
-/* {{{ xfree */
 static void xfree(void *ptr)
 {
   if (ptr != NULL) {
     free(ptr);
   }
 }
-/* }}} */
 
-/* {{{ xfree_overwrite */
 static void xfree_overwrite(char *ptr)
 {
   if (ptr != NULL) {
@@ -496,11 +442,9 @@ static void xfree_overwrite(char *ptr)
     free(ptr);
   }
 }
-/* }}} */
 
-/* {{{ memspn */
 static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
-    size_t ndelims)
+ size_t ndelims)
 {
   unsigned char *buf_end = ((unsigned char *)buf) + buf_len;
   unsigned char *p;
@@ -553,11 +497,9 @@ static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
 
   return NULL;
 }
-/* }}} */
 
-/* {{{ memcspn */
 static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
-    size_t ndelims)
+ size_t ndelims)
 {
   if (ndelims == 1) {
     return memchr(buf, delims[0], buf_len);
@@ -579,20 +521,20 @@ static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
     return NULL;
   }
 }
-/* }}} */
 
-/* {{{ pam_mysql_md5_data
- * 
+/**
+ * pam_mysql_md5_data
+ *
  * AFAIK, only FreeBSD has MD5Data() defined in md5.h
  * better MD5 support will appear in 0.5
- */
+ **/
 #ifdef HAVE_MD5DATA
 #define HAVE_PAM_MYSQL_MD5_DATA
 #define pam_mysql_md5_data MD5Data
 #elif defined(HAVE_OPENSSL) || (defined(HAVE_SASL_MD5_H) && defined(USE_SASL_MD5)) || (!defined(HAVE_OPENSSL) && defined(HAVE_SOLARIS_MD5))
 #if defined(USE_SASL_MD5)
 static unsigned char *MD5(const unsigned char *d, unsigned int n,
-    unsigned char *md)
+ unsigned char *md)
 {
   MD5_CTX ctx;
 
@@ -630,9 +572,10 @@ static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *m
   return md;
 }
 #endif
-/* }}} */
 
-/* {{{ pam_mysql_sha1_data */
+/**
+ * pam_mysql_sha1_data
+ */
 #if defined(HAVE_OPENSSL)
 #define HAVE_PAM_MYSQL_SHA1_DATA
 static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *md)
@@ -657,6 +600,9 @@ static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *
   return md;
 }
 
+/**
+ * pam_mysql_sha512_data
+ */
 static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char *md)
 {
   size_t i, j;
@@ -679,7 +625,6 @@ static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char
   return md;
 }
 #endif
-/* }}} */
 
 #if defined(HAVE_PAM_MYSQL_SHA1_DATA) && defined(HAVE_PAM_MYSQL_MD5_DATA)
 #define HAVE_PAM_MYSQL_DRUPAL7
@@ -728,7 +673,8 @@ static int d7_password_get_count_log2(char *setting)
   return -1;
 }
 
-static char * _password_base64_encode(unsigned char *input, int count, char *output) {
+static char * _password_base64_encode(unsigned char *input, int count, char *output)
+{
   int i = 0, off = 0;
   char *itoa64 = _password_itoa64();
   unsigned long value;
@@ -758,7 +704,11 @@ static char * _password_base64_encode(unsigned char *input, int count, char *out
   return output;
 }
 
-/* Strings may be binary and contain \0, so we can't use strlen */
+/**
+ * d7_hash
+ *
+ * Strings may be binary and contain \0, so we can't use strlen
+ */
 static char *d7_hash(int use_md5, char *string1, int len1, char *string2, int len2)
 {
   int len = len1 + len2;
@@ -782,7 +732,8 @@ static char *d7_hash(int use_md5, char *string1, int len1, char *string2, int le
 }
 
 // The first 12 characters of an existing hash are its setting string.
-static char * d7_password_crypt(int use_md5, char *password, char *setting) {
+static char * d7_password_crypt(int use_md5, char *password, char *setting)
+{
   char salt[9], *old, *new, *final;
   int expected, count, count_log2 = d7_password_get_count_log2(setting);
   int len;
@@ -874,10 +825,10 @@ static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, c
   return md;
 }
 #endif
-/* }}} */
 
-/* {{{ option handlers */
-/* {{{ pam_mysql_string_opt_getter */
+/**
+ * pam_mysql_string_opt_getter
+ */
 static pam_mysql_err_t pam_mysql_string_opt_getter(void *val, const char **pretval, int *to_release)
 {
   *pretval = *(char **)val;
@@ -885,9 +836,10 @@ static pam_mysql_err_t pam_mysql_string_opt_getter(void *val, const char **pretv
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_string_opt_setter */
+/**
+ * pam_mysql_string_opt_setter
+ */
 static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval_str)
 {
   if (*(char **)val != NULL) {
@@ -901,10 +853,10 @@ static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_boolean_opt_getter
-*/
+/**
+ * pam_mysql_boolean_opt_getter
+ **/
 static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pretval, int *to_release)
 {
   *pretval = (*(int *)val ? "true": "false");
@@ -912,9 +864,10 @@ static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pret
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_boolean_opt_setter */
+/**
+ * pam_mysql_boolean_opt_setter
+ **/
 static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newval_str)
 {
   *(int *)val = (strcmp(newval_str, "0") != 0 &&
@@ -924,9 +877,10 @@ static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newva
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_crypt_opt_getter */
+/**
+ * pam_mysql_crypt_opt_getter
+ **/
 static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretval, int *to_release)
 {
   switch (*(int *)val) {
@@ -966,9 +920,10 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_crypt_opt_setter */
+/**
+ * pam_mysql_crypt_opt_setter
+ **/
 static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_str)
 {
   if (strcmp(newval_str, "0") == 0 || strcasecmp(newval_str, "plain") == 0) {
@@ -1008,10 +963,10 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
   return PAM_MYSQL_ERR_INVAL;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ option definitions */
+/**
+ * option definitions
+ **/
 #define PAM_MYSQL_OFFSETOF(type, x) ((size_t)&((type *)0)->x)
 
 #define PAM_MYSQL_DEF_OPTION(name, accr) PAM_MYSQL_DEF_OPTION2(name, name, accr)
@@ -1065,10 +1020,10 @@ static pam_mysql_option_t options[] = {
   PAM_MYSQL_DEF_OPTION2(debug, verbose, &pam_mysql_boolean_opt_accr),
   { NULL, 0, 0, NULL }
 };
-/* }}} */
 
-/* {{{ string functions */
-/* {{{ pam_mysql_str_init() */
+/**
+ * pam_mysql_str_init()
+ **/
 static pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle)
 {
   str->p = "";
@@ -1078,9 +1033,10 @@ static pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle)
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_destroy() */
+/**
+ * pam_mysql_str_destroy()
+ */
 static void pam_mysql_str_destroy(pam_mysql_str_t *str)
 {
   if (str->alloc_size > 0) {
@@ -1090,9 +1046,10 @@ static void pam_mysql_str_destroy(pam_mysql_str_t *str)
     xfree(str->p);
   }
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_reserve() */
+/**
+ * pam_mysql_str_reserve()
+ **/
 static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
 {
   size_t len_req;
@@ -1116,7 +1073,7 @@ static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
       new_size *= 2;
       if (cv > new_size) {
         syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-        return PAM_MYSQL_ERR_ALLOC;    
+        return PAM_MYSQL_ERR_ALLOC;
       }
       cv = new_size;
     } while (new_size < len_req);
@@ -1124,7 +1081,7 @@ static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
     if (str->mangle) {
       if (NULL == (new_buf = xcalloc(new_size, sizeof(char)))) {
         syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-        return PAM_MYSQL_ERR_ALLOC;    
+        return PAM_MYSQL_ERR_ALLOC;
       }
 
       memcpy(new_buf, str->p, str->len);
@@ -1136,12 +1093,12 @@ static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
       if (str->alloc_size == 0) {
         if (NULL == (new_buf = xcalloc(new_size, sizeof(char)))) {
           syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          return PAM_MYSQL_ERR_ALLOC;    
+          return PAM_MYSQL_ERR_ALLOC;
         }
       } else {
         if (NULL == (new_buf = xrealloc(str->p, new_size, sizeof(char)))) {
           syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          return PAM_MYSQL_ERR_ALLOC;    
+          return PAM_MYSQL_ERR_ALLOC;
         }
       }
     }
@@ -1151,11 +1108,12 @@ static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_append() */
-static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str,
-    const char *s, size_t len)
+/**
+ * pam_mysql_str_append()
+ **/
+static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str, const char
+    *s, size_t len)
 {
   pam_mysql_err_t err;
 
@@ -1169,16 +1127,15 @@ static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str,
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_append_char() */
 static pam_mysql_err_t pam_mysql_str_append_char(pam_mysql_str_t *str, char c)
 {
   return pam_mysql_str_append(str, &c, sizeof(c));
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_truncate() */
+/**
+ * pam_mysql_str_truncate()
+ **/
 static pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len)
 {
   if (len > str->len) {
@@ -1193,11 +1150,10 @@ static pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len)
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ stream functions */
-/* {{{ pam_mysql_stream_open */
+/**
+ * pam_mysql_stream_open
+ **/
 static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
     pam_mysql_ctx_t *ctx, const char *file)
 {
@@ -1257,20 +1213,22 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_close */
+/**
+ * pam_mysql_stream_close
+ **/
 static void pam_mysql_stream_close(pam_mysql_stream_t *stream)
 {
   if (stream->fd != -1) {
     close(stream->fd);
   }
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_getc */
+/**
+ * pam_mysql_stream_getc
+ **/
 static pam_mysql_err_t pam_mysql_stream_getc(pam_mysql_stream_t *stream,
-    int *retval)
+ int *retval)
 {
   if (stream->buf_ptr >= stream->buf_end) {
     ssize_t new_buf_len;
@@ -1305,9 +1263,10 @@ static pam_mysql_err_t pam_mysql_stream_getc(pam_mysql_stream_t *stream,
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_ungetc */
+/**
+ * pam_mysql_stream_ungetc
+ **/
 static pam_mysql_err_t pam_mysql_stream_ungetc(pam_mysql_stream_t *stream, int c)
 {
   if (stream->buf_ptr == stream->buf_start) {
@@ -1325,11 +1284,12 @@ static pam_mysql_err_t pam_mysql_stream_ungetc(pam_mysql_stream_t *stream, int c
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_skip_spn */
+/**
+ * pam_mysql_stream_skip_spn
+ **/
 static pam_mysql_err_t pam_mysql_stream_skip_spn(pam_mysql_stream_t *stream,
-    const char *accept_cset, size_t naccepts)
+ const char *accept_cset, size_t naccepts)
 {
   unsigned char *p;
 
@@ -1385,12 +1345,13 @@ static pam_mysql_err_t pam_mysql_stream_skip_spn(pam_mysql_stream_t *stream,
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_read_cspn */
+/**
+ * pam_mysql_stream_read_cspn
+ **/
 static pam_mysql_err_t pam_mysql_stream_read_cspn(pam_mysql_stream_t *stream,
-    pam_mysql_str_t *append_to, int *found_delim, const char *delims,
-    size_t ndelims)
+ pam_mysql_str_t *append_to, int *found_delim, const char *delims,
+ size_t ndelims)
 {
   pam_mysql_err_t err;
   unsigned char *p;
@@ -1492,10 +1453,10 @@ static pam_mysql_err_t pam_mysql_stream_read_cspn(pam_mysql_stream_t *stream,
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ config file scanner / parser */
+/**
+ * config file scanner / parser
+ **/
 static const char * pam_mysql_config_token_name[] = {
   "=",
   "<NEWLINE>",
@@ -1505,10 +1466,12 @@ static const char * pam_mysql_config_token_name[] = {
   NULL
 };
 
-/* {{{ pam_mysql_config_scanner_init */
+/**
+ * pam_mysql_config_scanner_init
+ **/
 static pam_mysql_err_t pam_mysql_config_scanner_init(
-    pam_mysql_config_scanner_t *scanner, pam_mysql_ctx_t *ctx,
-    pam_mysql_stream_t *stream)
+ pam_mysql_config_scanner_t *scanner, pam_mysql_ctx_t *ctx,
+ pam_mysql_stream_t *stream)
 {
   pam_mysql_err_t err;
 
@@ -1522,19 +1485,21 @@ static pam_mysql_err_t pam_mysql_config_scanner_init(
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_scanner_destroy */
+/**
+ * pam_mysql_config_scanner_destroy
+ **/
 static void pam_mysql_config_scanner_destroy(
-    pam_mysql_config_scanner_t *scanner)
+ pam_mysql_config_scanner_t *scanner)
 {
   pam_mysql_str_destroy(&scanner->image);
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_scanner_next_token */
+/**
+ * pam_mysql_config_scanner_next_token
+ **/
 static pam_mysql_err_t pam_mysql_config_scanner_next_token(
-    pam_mysql_config_scanner_t *scanner)
+ pam_mysql_config_scanner_t *scanner)
 {
   pam_mysql_err_t err;
   int c;
@@ -1708,30 +1673,33 @@ static pam_mysql_err_t pam_mysql_config_scanner_next_token(
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_parser_init */
+/**
+ * pam_mysql_config_parser_init
+ **/
 static pam_mysql_err_t pam_mysql_config_parser_init(
-    pam_mysql_config_parser_t *parser, pam_mysql_ctx_t *ctx,
-    pam_mysql_entry_handler_t *hdlr)
+ pam_mysql_config_parser_t *parser, pam_mysql_ctx_t *ctx,
+ pam_mysql_entry_handler_t *hdlr)
 {
   parser->ctx = ctx;
   parser->hdlr = hdlr;
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_parser_destroy */
+/**
+ * pam_mysql_config_parser_destroy
+ **/
 static void pam_mysql_config_parser_destroy(pam_mysql_config_parser_t *parser)
 {
   /* do nothing */
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_parser_parse */
+/**
+ * pam_mysql_config_parser_parse
+ **/
 static pam_mysql_err_t pam_mysql_config_parser_parse(
-    pam_mysql_config_parser_t *parser, pam_mysql_stream_t *stream)
+ pam_mysql_config_parser_t *parser, pam_mysql_stream_t *stream)
 {
   pam_mysql_err_t err;
   pam_mysql_config_scanner_t scanner;
@@ -1909,13 +1877,12 @@ out:
 
   return err;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ pam_mysql_find_option()
-*/
+/**
+ * pam_mysql_find_option()
+ **/
 pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
-    const char *name, size_t name_len)
+ const char *name, size_t name_len)
 {
   /* set the various ctx */
   pam_mysql_option_t *retval;
@@ -1929,9 +1896,10 @@ pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
 
   return NULL;
 }
-/* }}} */
 
-/* {{{ entry handler */
+/**
+ * entry handler
+ **/
 static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
   PAM_MYSQL_DEF_OPTION2(users.host, host, &pam_mysql_string_opt_accr),
   PAM_MYSQL_DEF_OPTION2(users.database, db, &pam_mysql_string_opt_accr),
@@ -1959,10 +1927,12 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
   { NULL, 0, 0, NULL }
 };
 
-/* {{{ pam_mysql_handle_entry */
-static pam_mysql_err_t pam_mysql_handle_entry(
-    pam_mysql_entry_handler_t *hdlr, int line_num, const char *name,
-    size_t name_len, const char *value, size_t value_len)
+/**
+ * pam_mysql_handle_entry
+ **/
+static pam_mysql_err_t pam_mysql_handle_entry( pam_mysql_entry_handler_t *hdlr,
+    int line_num, const char *name, size_t name_len, const char *value, size_t
+    value_len)
 {
   pam_mysql_err_t err;
   pam_mysql_option_t *opt = pam_mysql_find_option(hdlr->options, name,
@@ -1987,11 +1957,12 @@ static pam_mysql_err_t pam_mysql_handle_entry(
 
   return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_entry_handler_init */
-static pam_mysql_err_t pam_mysql_entry_handler_init(
-    pam_mysql_entry_handler_t *hdlr, pam_mysql_ctx_t *ctx)
+/**
+ * pam_mysql_entry_handler_init
+ **/
+static pam_mysql_err_t pam_mysql_entry_handler_init( pam_mysql_entry_handler_t
+    *hdlr, pam_mysql_ctx_t *ctx)
 {
   hdlr->handle_entry_fn = pam_mysql_handle_entry;
   hdlr->ctx = ctx;
@@ -1999,20 +1970,20 @@ static pam_mysql_err_t pam_mysql_entry_handler_init(
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_entry_handler_destroy */
-static void pam_mysql_entry_handler_destroy(
-    pam_mysql_entry_handler_t *hdlr)
+/**
+ * pam_mysql_entry_handler_destroy
+ **/
+static void pam_mysql_entry_handler_destroy( pam_mysql_entry_handler_t *hdlr)
 {
   /* do nothing */
 }
-/* }}} */
-/* }}} */
 
-// {{{ pam_mysql_get_host_info
+/**
+ * pam_mysql_get_host_info
+ **/
 static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
-    const char **pretval)
+ const char **pretval)
 {
   char hostname[MAXHOSTNAMELEN + 1];
   char *retval;
@@ -2164,7 +2135,7 @@ static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
       case AF_INET:
         if (NULL == (retval = xcalloc(INET_ADDRSTRLEN, sizeof(char)))) {
           syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          xfree(hent);  
+          xfree(hent);
           return PAM_MYSQL_ERR_ALLOC;
         }
 
@@ -2205,8 +2176,9 @@ static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
   return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* {{{ pam_mysql_init_ctx()
-*/
+/**
+ * pam_mysql_init_ctx()
+ **/
 static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
 {
   ctx->mysql_hdl = NULL;
@@ -2240,9 +2212,10 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_destroy_ctx() */
+/**
+ * pam_mysql_destroy_ctx()
+ **/
 static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
 {
   if (ctx->verbose) {
@@ -2308,9 +2281,10 @@ static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
   xfree(ctx->my_host_info);
   ctx->my_host_info = NULL;
 }
-/* }}} */
 
-/* {{{ pam_mysql_release_ctx() */
+/**
+ * pam_mysql_release_ctx()
+ **/
 static void pam_mysql_release_ctx(pam_mysql_ctx_t *ctx)
 {
   if (ctx->verbose) {
@@ -2322,17 +2296,18 @@ static void pam_mysql_release_ctx(pam_mysql_ctx_t *ctx)
     xfree(ctx);
   }
 }
-/* }}} */
 
-/* {{{ pam_mysql_cleanup_hdlr() */
+/**
+ * pam_mysql_cleanup_hdlr()
+ **/
 static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int status)
 {
   pam_mysql_release_ctx((pam_mysql_ctx_t*)voiddata);
 }
-/* }}} */
 
-/* {{{ pam_mysql_retrieve_ctx()
-*/
+/**
+ * pam_mysql_retrieve_ctx()
+ **/
 pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh)
 {
   pam_mysql_err_t err;
@@ -2376,10 +2351,10 @@ pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_set_option()
-*/
+/**
+ * pam_mysql_set_option()
+ **/
 pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, size_t name_len, const char *val)
 {
   pam_mysql_option_t *opt = pam_mysql_find_option(options, name, name_len);
@@ -2396,10 +2371,10 @@ pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, siz
 
   return opt->accessor->set_op((void *)((char *)ctx + opt->offset), val);
 }
-/* }}} */
 
-/* {{{ pam_mysql_get_option()
-*/
+/**
+ * pam_mysql_get_option()
+ **/
 pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval, int *to_release, const char *name, size_t name_len)
 {
   pam_mysql_option_t *opt = pam_mysql_find_option(options, name, name_len);
@@ -2416,16 +2391,16 @@ pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval,
 
   return opt->accessor->get_op((void *)((char *)ctx + opt->offset), pretval, to_release);
 }
-/* }}} */
 
-/* {{{ pam_mysql_parse_args()
-*/
+/**
+ * pam_mysql_parse_args()
+ **/
 pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char **argv)
 {
   pam_mysql_err_t err;
   int param_changed = 0;
   char *value = NULL;
-  int  i;
+  int i;
 
   /* process all the arguments */
   for (i = 0; i < argc; i++) {
@@ -2454,7 +2429,7 @@ pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char 
       strnncpy(buf, sizeof(buf), name, name_len);
       syslog(LOG_AUTHPRIV | LOG_INFO, PAM_MYSQL_LOG_PREFIX "option %s is set to \"%s\"", buf, value);
     }
-  }  
+  }
 
   /* close the database in case we get new args */
   if (param_changed) {
@@ -2463,11 +2438,12 @@ pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char 
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_read_config_file() */
+/**
+ * pam_mysql_read_config_file()
+ **/
 static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
-    const char *path)
+ const char *path)
 {
   pam_mysql_err_t err;
   pam_mysql_entry_handler_t handler;
@@ -2498,10 +2474,10 @@ static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
 
   return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_open_db()
-*/
+/**
+ * pam_mysql_open_db()
+ **/
 static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *ctx)
 {
   pam_mysql_err_t err;
@@ -2590,10 +2566,10 @@ out:
 
   return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_close_db()
-*/
+/**
+ * pam_mysql_close_db()
+ **/
 static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
 {
   if (ctx->verbose) {
@@ -2611,10 +2587,10 @@ static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
   xfree(ctx->mysql_hdl);
   ctx->mysql_hdl = NULL;
 }
-/* }}} */
 
-/* {{{ pam_mysql_quick_escape()
-*/
+/**
+ * pam_mysql_quick_escape()
+ **/
 static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_str_t *append_to, const char *val, size_t val_len)
 {
   size_t len;
@@ -2637,11 +2613,12 @@ static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_st
 
   return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_format_string() */
+/**
+ * pam_mysql_format_string()
+ **/
 static pam_mysql_err_t pam_mysql_format_string(pam_mysql_ctx_t *ctx,
-    pam_mysql_str_t *pretval, const char *template, int mangle, ...)
+ pam_mysql_str_t *pretval, const char *template, int mangle, ...)
 {
   pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
   const char *p;
@@ -2821,12 +2798,12 @@ out:
 
   return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_check_passwd
-*/
+/**
+ * pam_mysql_check_passwd
+ **/
 static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
-    const char *user, const char *passwd, int null_inhibited)
+ const char *user, const char *passwd, int null_inhibited)
 {
   pam_mysql_err_t err;
   pam_mysql_str_t query;
@@ -3053,17 +3030,18 @@ out:
     }
 
     return err;
-  }
-  /* }}} */
+}
 
-/* {{{ pam_mysql_saltify()
- * Create a random salt for use with CRYPT() when changing passwords */
+/**
+ * pam_mysql_saltify()
+ * Create a random salt for use with CRYPT() when changing passwords
+ **/
 static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salter)
 {
   unsigned int i = 0;
   char *q;
   unsigned int seed = 0;
-  static const char saltstr[] = 
+  static const char saltstr[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./";
 
   if (ctx->verbose) {
@@ -3103,1534 +3081,1537 @@ static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salt
 
   if (ctx->md5) {
     *(q++) = '$';
-  }  
+  }
   *q = '\0';
 
   if (ctx->verbose) {
     syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_saltify() returning salt = %s.", salt);
   }
 }
-/* }}} */
 
-/* {{{ pam_mysql_update_passwd 
+/**
+ * pam_mysql_update_passwd
+ *
  * Update the password in MySQL
  * To reduce the number of calls to the DB, I'm now assuming that the old
  * password has been verified elsewhere, so I only check for null/not null
- * and is_root. */
+ * and is_root.
+ **/
 static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char *user, const char *new_passwd)
 {
-  pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
-  pam_mysql_str_t query;
-  char *encrypted_passwd = NULL;
+ pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
+ pam_mysql_str_t query;
+ char *encrypted_passwd = NULL;
 
-  if ((err = pam_mysql_str_init(&query, 1))) {
-    return err;
-  }
+ if ((err = pam_mysql_str_init(&query, 1))) {
+ return err;
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_update_passwd() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_update_passwd() called.");
+ }
 
-  if (user == NULL) {
-    if (ctx->verbose) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "user is NULL.");
-    }
+ if (user == NULL) {
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "user is NULL.");
+ }
 
-    syslog(LOG_NOTICE, PAM_MYSQL_LOG_PREFIX "unable to change password");
-    return PAM_MYSQL_ERR_INVAL;
-  }
+ syslog(LOG_NOTICE, PAM_MYSQL_LOG_PREFIX "unable to change password");
+ return PAM_MYSQL_ERR_INVAL;
+ }
 
-  if (new_passwd != NULL) {
-    switch (ctx->crypt_type) {
-      case 0:
-        if (NULL == (encrypted_passwd = xstrdup(new_passwd))) {
-          syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-          err = PAM_MYSQL_ERR_ALLOC;
-          goto out;
-        }
-        break;
+ if (new_passwd != NULL) {
+ switch (ctx->crypt_type) {
+ case 0:
+ if (NULL == (encrypted_passwd = xstrdup(new_passwd))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
+ break;
 
-      case 1: {
-                char salt[18];
-                pam_mysql_saltify(ctx, salt, new_passwd);
-                if (NULL == (encrypted_passwd = xstrdup(crypt(new_passwd, salt)))) {
-                  syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                  err = PAM_MYSQL_ERR_ALLOC;
-                  goto out;
-                }
-              } break;
+ case 1: {
+ char salt[18];
+ pam_mysql_saltify(ctx, salt, new_passwd);
+ if (NULL == (encrypted_passwd = xstrdup(crypt(new_passwd, salt)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
+ } break;
 
-      case 2:
-              if (NULL == (encrypted_passwd = xcalloc(41 + 1, sizeof(char)))) {
-                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                err = PAM_MYSQL_ERR_ALLOC;
-                goto out;
-              }
+ case 2:
+ if (NULL == (encrypted_passwd = xcalloc(41 + 1, sizeof(char)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
 #ifdef HAVE_MAKE_SCRAMBLED_PASSWORD_323
-              if (ctx->use_323_passwd) {
-                make_scrambled_password_323(encrypted_passwd, new_passwd);
-              } else {
-                my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
-              }
+ if (ctx->use_323_passwd) {
+ make_scrambled_password_323(encrypted_passwd, new_passwd);
+ } else {
+ my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+ }
 #else
-              my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+ my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
 #endif
-              break;
+ break;
 
-      case 3:
+ case 3:
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
-              if (NULL == (encrypted_passwd = xcalloc(32 + 1, sizeof(char)))) {
-                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                err = PAM_MYSQL_ERR_ALLOC;
-                goto out;
-              }
-              pam_mysql_md5_data((unsigned char*)new_passwd,
-                  strlen(new_passwd), encrypted_passwd);
+ if (NULL == (encrypted_passwd = xcalloc(32 + 1, sizeof(char)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
+ pam_mysql_md5_data((unsigned char*)new_passwd,
+ strlen(new_passwd), encrypted_passwd);
 #else
-              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
-              err = PAM_MYSQL_ERR_NOTIMPL;
-              goto out;
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+ err = PAM_MYSQL_ERR_NOTIMPL;
+ goto out;
 #endif
-              break;
+ break;
 
-      case 4:
+ case 4:
 #ifdef HAVE_PAM_MYSQL_SHA1_DATA
-              if (NULL == (encrypted_passwd = xcalloc(40 + 1, sizeof(char)))) {
-                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                err = PAM_MYSQL_ERR_ALLOC;
-                goto out;
-              }
-              pam_mysql_sha1_data((unsigned char*)new_passwd,
-                  strlen(new_passwd), encrypted_passwd);
+ if (NULL == (encrypted_passwd = xcalloc(40 + 1, sizeof(char)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
+ pam_mysql_sha1_data((unsigned char*)new_passwd,
+ strlen(new_passwd), encrypted_passwd);
 #else
-              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 hash is not supported in this build.");
-              err = PAM_MYSQL_ERR_NOTIMPL;
-              goto out;
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA1 hash is not supported in this build.");
+ err = PAM_MYSQL_ERR_NOTIMPL;
+ goto out;
 #endif
-              break;
+ break;
 
-      case 6:
-              {
+ case 6:
+ {
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
-                if (NULL == (encrypted_passwd = xcalloc(32 + 1+ 32 +1, sizeof(char)))) {
-                  syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                  err = PAM_MYSQL_ERR_ALLOC;
-                  goto out;
-                }
+ if (NULL == (encrypted_passwd = xcalloc(32 + 1+ 32 +1, sizeof(char)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
 
-                int len=strlen(new_passwd)+32;
+ int len=strlen(new_passwd)+32;
 
-                char *tmp;
+ char *tmp;
 
-                if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
-                  syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                  err = PAM_MYSQL_ERR_ALLOC;
-                  goto out;
-                }
+ if (NULL == (tmp = xcalloc(len+1, sizeof(char)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
 
-                char salt[33];
-                salt[32]=0;
+ char salt[33];
+ salt[32]=0;
 
-                srandom(time(NULL));
+ srandom(time(NULL));
 
-                int i;
-                for(i=0;i<32; i++)
-                  salt[i]=(char)((random()/(double)RAND_MAX * 93.0) +33.0);
+ int i;
+ for(i=0;i<32; i++)
+ salt[i]=(char)((random()/(double)RAND_MAX * 93.0) +33.0);
 
-                strcat(tmp,new_passwd);
-                strcat(tmp,salt);
+ strcat(tmp,new_passwd);
+ strcat(tmp,salt);
 
-                pam_mysql_md5_data((unsigned char*)tmp, len, encrypted_passwd);
+ pam_mysql_md5_data((unsigned char*)tmp, len, encrypted_passwd);
 
-                xfree(tmp);
+ xfree(tmp);
 
-                strcat(encrypted_passwd,":");
-                strcat(encrypted_passwd,salt);
+ strcat(encrypted_passwd,":");
+ strcat(encrypted_passwd,salt);
 
 #else
-                syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
-                err = PAM_MYSQL_ERR_NOTIMPL;
-                goto out;
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+ err = PAM_MYSQL_ERR_NOTIMPL;
+ goto out;
 #endif
-                break;
-              }
-      default:
-              encrypted_passwd = NULL;
-              break;
-    }
-  }
+ break;
+ }
+ default:
+ encrypted_passwd = NULL;
+ break;
+ }
+ }
 
-  err = pam_mysql_format_string(ctx, &query,
-      (ctx->where == NULL ?
-       "UPDATE %[table] SET %[passwdcolumn] = '%s' WHERE %[usercolumn] = '%s'":
-       "UPDATE %[table] SET %[passwdcolumn] = '%s' WHERE %[usercolumn] = '%s' AND (%S)"),
-      1, (encrypted_passwd == NULL ? "": encrypted_passwd), user, ctx->where);
-  if (err) {
-    goto out;
-  }
+ err = pam_mysql_format_string(ctx, &query,
+ (ctx->where == NULL ?
+ "UPDATE %[table] SET %[passwdcolumn] = '%s' WHERE %[usercolumn] = '%s'":
+ "UPDATE %[table] SET %[passwdcolumn] = '%s' WHERE %[usercolumn] = '%s' AND (%S)"),
+ 1, (encrypted_passwd == NULL ? "": encrypted_passwd), user, ctx->where);
+ if (err) {
+ goto out;
+ }
 
 #ifdef HAVE_MYSQL_REAL_QUERY
-  if (mysql_real_query(ctx->mysql_hdl, query.p, query.len)) {
+ if (mysql_real_query(ctx->mysql_hdl, query.p, query.len)) {
 #else
-    if (mysql_query(ctx->mysql_hdl, query.p)) {
+ if (mysql_query(ctx->mysql_hdl, query.p)) {
 #endif
-      err = PAM_MYSQL_ERR_DB;
-      goto out;
-    }
+ err = PAM_MYSQL_ERR_DB;
+ goto out;
+ }
 
 out:
-    if (err == PAM_MYSQL_ERR_DB) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "MySQL error (%s)", mysql_error(ctx->mysql_hdl));
-    }
+ if (err == PAM_MYSQL_ERR_DB) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "MySQL error (%s)", mysql_error(ctx->mysql_hdl));
+ }
 
-    if (encrypted_passwd != NULL) {
-      char *p;
-      for (p = encrypted_passwd; *p != '\0'; p++) {
-        *p = '\0';
-      }
-      xfree(encrypted_passwd);
-    }
+ if (encrypted_passwd != NULL) {
+ char *p;
+ for (p = encrypted_passwd; *p != '\0'; p++) {
+ *p = '\0';
+ }
+ xfree(encrypted_passwd);
+ }
 
-    pam_mysql_str_destroy(&query);
+ pam_mysql_str_destroy(&query);
 
-    if (ctx->verbose) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_update_passwd() returning %i.", err);
-    }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_update_passwd() returning %i.", err);
+ }
 
-    return err;
-  }
-  /* }}} */
+ return err;
+ }
 
-/* {{{ pam_mysql_query_user_stat */
+/**
+ * pam_mysql_query_user_stat
+ **/
 static pam_mysql_err_t pam_mysql_query_user_stat(pam_mysql_ctx_t *ctx,
-    int *pretval, const char *user)
+ int *pretval, const char *user)
 {
-  pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
-  pam_mysql_str_t query;
-  MYSQL_RES *result = NULL;
-  MYSQL_ROW row;
+ pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
+ pam_mysql_str_t query;
+ MYSQL_RES *result = NULL;
+ MYSQL_ROW row;
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_query_user_stat() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_query_user_stat() called.");
+ }
 
-  if ((err = pam_mysql_str_init(&query, 0))) {
-    return err;
-  }
+ if ((err = pam_mysql_str_init(&query, 0))) {
+ return err;
+ }
 
-  err = pam_mysql_format_string(ctx, &query,
-      (ctx->where == NULL ?
-       "SELECT %[statcolumn], %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s'":
-       "SELECT %[statcolumn], %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s' AND (%S)"),
-      1, user, ctx->where);
+ err = pam_mysql_format_string(ctx, &query,
+ (ctx->where == NULL ?
+ "SELECT %[statcolumn], %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s'":
+ "SELECT %[statcolumn], %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s' AND (%S)"),
+ 1, user, ctx->where);
 
-  if (err) {
-    goto out;
-  }
+ if (err) {
+ goto out;
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s", query.p);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s", query.p);
+ }
 
 #ifdef HAVE_MYSQL_REAL_QUERY
-  if (mysql_real_query(ctx->mysql_hdl, query.p, query.len)) {
+ if (mysql_real_query(ctx->mysql_hdl, query.p, query.len)) {
 #else
-    if (mysql_query(ctx->mysql_hdl, query.p)) {
+ if (mysql_query(ctx->mysql_hdl, query.p)) {
 #endif
-      err = PAM_MYSQL_ERR_DB;
-      goto out;
-    }
+ err = PAM_MYSQL_ERR_DB;
+ goto out;
+ }
 
-    if (NULL == (result = mysql_store_result(ctx->mysql_hdl))) {
-      err = PAM_MYSQL_ERR_DB;
-      goto out;
-    }
+ if (NULL == (result = mysql_store_result(ctx->mysql_hdl))) {
+ err = PAM_MYSQL_ERR_DB;
+ goto out;
+ }
 
-    switch (mysql_num_rows(result)) {
-      case 0:
-        syslog(LOG_AUTHPRIV | LOG_ERR, "%s", PAM_MYSQL_LOG_PREFIX "SELECT returned no result.");
-        err = PAM_MYSQL_ERR_NO_ENTRY;
-        goto out;
+ switch (mysql_num_rows(result)) {
+ case 0:
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s", PAM_MYSQL_LOG_PREFIX "SELECT returned no result.");
+ err = PAM_MYSQL_ERR_NO_ENTRY;
+ goto out;
 
-      case 1:
-        break;
+ case 1:
+ break;
 
-      case 2:
-        syslog(LOG_AUTHPRIV | LOG_ERR, "%s", PAM_MYSQL_LOG_PREFIX "SELECT returned an indetermined result.");
-        err = PAM_MYSQL_ERR_UNKNOWN;
-        goto out;
-    }
+ case 2:
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s", PAM_MYSQL_LOG_PREFIX "SELECT returned an indetermined result.");
+ err = PAM_MYSQL_ERR_UNKNOWN;
+ goto out;
+ }
 
-    if (NULL == (row = mysql_fetch_row(result))) {
-      err = PAM_MYSQL_ERR_DB;
-      goto out;
-    }
+ if (NULL == (row = mysql_fetch_row(result))) {
+ err = PAM_MYSQL_ERR_DB;
+ goto out;
+ }
 
-    if (row[0] == NULL) {
-      *pretval = PAM_MYSQL_USER_STAT_EXPIRED;
-    } else {
-      *pretval = strtol(row[0], NULL, 10) & ~PAM_MYSQL_USER_STAT_NULL_PASSWD;
-    }
+ if (row[0] == NULL) {
+ *pretval = PAM_MYSQL_USER_STAT_EXPIRED;
+ } else {
+ *pretval = strtol(row[0], NULL, 10) & ~PAM_MYSQL_USER_STAT_NULL_PASSWD;
+ }
 
-    if (row[1] == NULL) {
-      *pretval |= PAM_MYSQL_USER_STAT_NULL_PASSWD;
-    }
+ if (row[1] == NULL) {
+ *pretval |= PAM_MYSQL_USER_STAT_NULL_PASSWD;
+ }
 
 out:
-    if (err == PAM_MYSQL_ERR_DB) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "MySQL error (%s)", mysql_error(ctx->mysql_hdl));
-    }
+ if (err == PAM_MYSQL_ERR_DB) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "MySQL error (%s)", mysql_error(ctx->mysql_hdl));
+ }
 
-    if (result != NULL) {
-      mysql_free_result(result);
-    }
+ if (result != NULL) {
+ mysql_free_result(result);
+ }
 
-    pam_mysql_str_destroy(&query);
+ pam_mysql_str_destroy(&query);
 
-    if (ctx->verbose) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_query_user_stat() returning %i.", err);
-    }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_query_user_stat() returning %i.", err);
+ }
 
-    return err;
-  }
-  /* }}} */
+ return err;
+ }
 
-/* {{{ pam_mysql_sql_log()
-*/
+/**
+ * pam_mysql_sql_log()
+ **/
 static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *ctx, const char *msg, const char *user, const char *rhost)
 {
-  pam_mysql_err_t err;
-  pam_mysql_str_t query;
-  const char *host;
+ pam_mysql_err_t err;
+ pam_mysql_str_t query;
+ const char *host;
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_sql_log() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_sql_log() called.");
+ }
 
-  if ((err = pam_mysql_str_init(&query, 1))) {
-    return err;
-  }
+ if ((err = pam_mysql_str_init(&query, 1))) {
+ return err;
+ }
 
-  if (!ctx->sqllog) {
-    err = PAM_MYSQL_ERR_SUCCESS;
-    goto out;
-  }
+ if (!ctx->sqllog) {
+ err = PAM_MYSQL_ERR_SUCCESS;
+ goto out;
+ }
 
-  if (pam_mysql_get_host_info(ctx, &host)) {
-    host = "(unknown)";
-  }
+ if (pam_mysql_get_host_info(ctx, &host)) {
+ host = "(unknown)";
+ }
 
-  if (ctx->logtable == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
-        PAM_MYSQL_LOG_PREFIX "sqllog set but logtable not set");
-    return PAM_MYSQL_ERR_INVAL;
-  }
+ if (ctx->logtable == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
+ PAM_MYSQL_LOG_PREFIX "sqllog set but logtable not set");
+ return PAM_MYSQL_ERR_INVAL;
+ }
 
-  if (ctx->logmsgcolumn == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
-        PAM_MYSQL_LOG_PREFIX "sqllog set but logmsgcolumn not set");
-    return PAM_MYSQL_ERR_INVAL;
-  }
+ if (ctx->logmsgcolumn == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
+ PAM_MYSQL_LOG_PREFIX "sqllog set but logmsgcolumn not set");
+ return PAM_MYSQL_ERR_INVAL;
+ }
 
-  if (ctx->logusercolumn == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
-        PAM_MYSQL_LOG_PREFIX "sqllog set but logusercolumn not set");
-    return PAM_MYSQL_ERR_INVAL;
-  }
+ if (ctx->logusercolumn == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
+ PAM_MYSQL_LOG_PREFIX "sqllog set but logusercolumn not set");
+ return PAM_MYSQL_ERR_INVAL;
+ }
 
-  if (ctx->loghostcolumn == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
-        PAM_MYSQL_LOG_PREFIX "sqllog set but loghostcolumn not set");
-    return PAM_MYSQL_ERR_INVAL;
-  }
+ if (ctx->loghostcolumn == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
+ PAM_MYSQL_LOG_PREFIX "sqllog set but loghostcolumn not set");
+ return PAM_MYSQL_ERR_INVAL;
+ }
 
-  if (ctx->logtimecolumn == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
-        PAM_MYSQL_LOG_PREFIX "sqllog set but logtimecolumn not set");
-    return PAM_MYSQL_ERR_INVAL;
-  }
+ if (ctx->logtimecolumn == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, "%s",
+ PAM_MYSQL_LOG_PREFIX "sqllog set but logtimecolumn not set");
+ return PAM_MYSQL_ERR_INVAL;
+ }
 
-  if (ctx->logrhostcolumn) {
-    err = pam_mysql_format_string(ctx, &query,
-        "INSERT INTO %[logtable] (%[logmsgcolumn], %[logusercolumn], %[loghostcolumn], %[logrhostcolumn], %[logpidcolumn], %[logtimecolumn]) VALUES ('%s', '%s', '%s', '%s', '%u', NOW())", 1,
-        msg, user, host, rhost == NULL ? "(unknown)": rhost, getpid());
-  } else {
-    err = pam_mysql_format_string(ctx, &query,
-        "INSERT INTO %[logtable] (%[logmsgcolumn], %[logusercolumn], %[loghostcolumn], %[logpidcolumn], %[logtimecolumn]) VALUES ('%s', '%s', '%s', '%u', NOW())", 1,
-        msg, user, host, getpid());
-  }
+ if (ctx->logrhostcolumn) {
+ err = pam_mysql_format_string(ctx, &query,
+ "INSERT INTO %[logtable] (%[logmsgcolumn], %[logusercolumn], %[loghostcolumn], %[logrhostcolumn], %[logpidcolumn], %[logtimecolumn]) VALUES ('%s', '%s', '%s', '%s', '%u', NOW())", 1,
+ msg, user, host, rhost == NULL ? "(unknown)": rhost, getpid());
+ } else {
+ err = pam_mysql_format_string(ctx, &query,
+ "INSERT INTO %[logtable] (%[logmsgcolumn], %[logusercolumn], %[loghostcolumn], %[logpidcolumn], %[logtimecolumn]) VALUES ('%s', '%s', '%s', '%u', NOW())", 1,
+ msg, user, host, getpid());
+ }
 
-  if (err) {
-    goto out;
-  }
+ if (err) {
+ goto out;
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s", query.p);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "%s", query.p);
+ }
 
 #ifdef HAVE_MYSQL_REAL_QUERY
-  if (mysql_real_query(ctx->mysql_hdl, query.p, query.len)) {
+ if (mysql_real_query(ctx->mysql_hdl, query.p, query.len)) {
 #else
-    if (mysql_query(ctx->mysql_hdl, query.p)) {
+ if (mysql_query(ctx->mysql_hdl, query.p)) {
 #endif
-      err = PAM_MYSQL_ERR_DB;
-      goto out;
-    }
+ err = PAM_MYSQL_ERR_DB;
+ goto out;
+ }
 
-    err = PAM_MYSQL_ERR_SUCCESS;
+ err = PAM_MYSQL_ERR_SUCCESS;
 
 out:
-    if (err == PAM_MYSQL_ERR_DB) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "MySQL error (%s)", mysql_error(ctx->mysql_hdl));
-    }
+ if (err == PAM_MYSQL_ERR_DB) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "MySQL error (%s)", mysql_error(ctx->mysql_hdl));
+ }
 
-    pam_mysql_str_destroy(&query);
+ pam_mysql_str_destroy(&query);
 
-    if (ctx->verbose) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_sql_log() returning %d.", err);
-    }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_sql_log() returning %d.", err);
+ }
 
-    return err;
-  }
-  /* }}} */
+ return err;
+ }
 
-/* {{{ pam_mysql_converse()
-*/
+/**
+ * pam_mysql_converse()
+ **/
 static pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
-    pam_handle_t *pamh, size_t nargs, ...) 
+ pam_handle_t *pamh, size_t nargs, ...)
 {
-  pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
-  int perr;
-  struct pam_message **msgs = NULL;
-  struct pam_message *bulk_msg_buf = NULL;
-  struct pam_response *resps = NULL;
-  struct pam_conv *conv = NULL;
-  va_list ap;
-  size_t i;
-  char **retval = NULL;
+ pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
+ int perr;
+ struct pam_message **msgs = NULL;
+ struct pam_message *bulk_msg_buf = NULL;
+ struct pam_response *resps = NULL;
+ struct pam_conv *conv = NULL;
+ va_list ap;
+ size_t i;
+ char **retval = NULL;
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_converse() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_converse() called.");
+ }
 
-  va_start(ap, nargs);
+ va_start(ap, nargs);
 
-  /* obtain conversation interface */
-  if ((perr = pam_get_item(pamh, PAM_CONV,
-          (PAM_GET_ITEM_CONST void **)&conv))) {
-    syslog(LOG_AUTHPRIV | LOG_ERR,
-        PAM_MYSQL_LOG_PREFIX "could not obtain coversation interface (reason: %s)", pam_strerror(pamh, perr));
-    err = PAM_MYSQL_ERR_UNKNOWN;
-    goto out;
-  }
+ /* obtain conversation interface */
+ if ((perr = pam_get_item(pamh, PAM_CONV,
+ (PAM_GET_ITEM_CONST void **)&conv))) {
+ syslog(LOG_AUTHPRIV | LOG_ERR,
+ PAM_MYSQL_LOG_PREFIX "could not obtain coversation interface (reason: %s)", pam_strerror(pamh, perr));
+ err = PAM_MYSQL_ERR_UNKNOWN;
+ goto out;
+ }
 
-  /* build message array */
-  if (NULL == (msgs = xcalloc(nargs, sizeof(struct pam_message *)))) {
+ /* build message array */
+ if (NULL == (msgs = xcalloc(nargs, sizeof(struct pam_message *)))) {
 
-    syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-    err = PAM_MYSQL_ERR_ALLOC;
-    goto out;
-  }
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
 
-  for (i = 0; i < nargs; i++) {
-    msgs[i] = NULL;
-  }
+ for (i = 0; i < nargs; i++) {
+ msgs[i] = NULL;
+ }
 
-  if (NULL == (bulk_msg_buf = xcalloc(nargs, sizeof(struct pam_message)))) {
+ if (NULL == (bulk_msg_buf = xcalloc(nargs, sizeof(struct pam_message)))) {
 
-    syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-    err = PAM_MYSQL_ERR_ALLOC;
-    goto out;
-  }
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
 
-  for (i = 0; i < nargs; i++) {
-    msgs[i] = &bulk_msg_buf[i];
-    msgs[i]->msg_style = va_arg(ap, int);
-    msgs[i]->msg = va_arg(ap, char *);
-  }
+ for (i = 0; i < nargs; i++) {
+ msgs[i] = &bulk_msg_buf[i];
+ msgs[i]->msg_style = va_arg(ap, int);
+ msgs[i]->msg = va_arg(ap, char *);
+ }
 
-  if (NULL == (retval = xcalloc(nargs + 1, sizeof(char **)))) {
-    syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-    err = PAM_MYSQL_ERR_ALLOC;
-    goto out;
-  }
+ if (NULL == (retval = xcalloc(nargs + 1, sizeof(char **)))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
 
-  for (i = 0; i < nargs; i++) {
-    retval[i] = NULL;
-  }
+ for (i = 0; i < nargs; i++) {
+ retval[i] = NULL;
+ }
 
-  switch ((perr = conv->conv(nargs,
-          (PAM_CONV_CONST struct pam_message **)msgs, &resps,
-          conv->appdata_ptr))) {
-    case PAM_SUCCESS:
-      break;
+ switch ((perr = conv->conv(nargs,
+ (PAM_CONV_CONST struct pam_message **)msgs, &resps,
+ conv->appdata_ptr))) {
+ case PAM_SUCCESS:
+ break;
 
 #ifdef HAVE_PAM_CONV_AGAIN
-    case PAM_CONV_AGAIN:
-      break;
+ case PAM_CONV_AGAIN:
+ break;
 #endif
-    default:
-      syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "conversation failure (reason: %s)",
-          pam_strerror(pamh, perr));
-      err = PAM_MYSQL_ERR_UNKNOWN;
-      goto out;
-  }
+ default:
+ syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "conversation failure (reason: %s)",
+ pam_strerror(pamh, perr));
+ err = PAM_MYSQL_ERR_UNKNOWN;
+ goto out;
+ }
 
-  for (i = 0; i < nargs; i++) {
-    if (resps && resps[i].resp != NULL &&
-        NULL == (retval[i] = xstrdup(resps[i].resp))) {
-      syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-      err = PAM_MYSQL_ERR_ALLOC;
-      goto out;
-    }
-  }
+ for (i = 0; i < nargs; i++) {
+ if (resps && resps[i].resp != NULL &&
+ NULL == (retval[i] = xstrdup(resps[i].resp))) {
+ syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+ err = PAM_MYSQL_ERR_ALLOC;
+ goto out;
+ }
+ }
 
-  retval[i] = NULL;
+ retval[i] = NULL;
 
 out:
-  if (resps != NULL) {
-    size_t i;
-    for (i = 0; i < nargs; i++) {
-      xfree_overwrite(resps[i].resp);
-    }
-    xfree(resps);
-  }
+ if (resps != NULL) {
+ size_t i;
+ for (i = 0; i < nargs; i++) {
+ xfree_overwrite(resps[i].resp);
+ }
+ xfree(resps);
+ }
 
-  if (bulk_msg_buf != NULL) {
-    memset(bulk_msg_buf, 0, sizeof(*bulk_msg_buf) * nargs);
-    xfree(bulk_msg_buf);
-  }
+ if (bulk_msg_buf != NULL) {
+ memset(bulk_msg_buf, 0, sizeof(*bulk_msg_buf) * nargs);
+ xfree(bulk_msg_buf);
+ }
 
-  xfree(msgs);
+ xfree(msgs);
 
-  if (err) {
-    if (retval != NULL) {
-      for (i = 0; i < nargs; i++) {
-        xfree_overwrite(retval[i]);
-        retval[i] = NULL;
-      }
-      xfree(retval);
-    }
-  } else {
-    *pretval = retval;
-  }
+ if (err) {
+ if (retval != NULL) {
+ for (i = 0; i < nargs; i++) {
+ xfree_overwrite(retval[i]);
+ retval[i] = NULL;
+ }
+ xfree(retval);
+ }
+ } else {
+ *pretval = retval;
+ }
 
-  va_end(ap);
+ va_end(ap);
 
-  return err;
+ return err;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ pam_mysql_query_user_caps */
+/**
+ * pam_mysql_query_user_caps
+ **/
 static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *ctx,
-    int *pretval, const char *user)
+ int *pretval, const char *user)
 {
-  *pretval = 0;
+ *pretval = 0;
 
-  if (geteuid() == 0) {
-    *pretval |= PAM_MYSQL_CAP_CHAUTHTOK_SELF;
+ if (geteuid() == 0) {
+ *pretval |= PAM_MYSQL_CAP_CHAUTHTOK_SELF;
 
-    if (getuid() == 0) {
-      *pretval |= PAM_MYSQL_CAP_CHAUTHTOK_OTHERS;
-    }
-  }
+ if (getuid() == 0) {
+ *pretval |= PAM_MYSQL_CAP_CHAUTHTOK_OTHERS;
+ }
+ }
 
-  return PAM_MYSQL_ERR_SUCCESS;
+ return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ PAM Authentication services */
-/* {{{ pam_sm_authenticate
-*/
+/**
+ * PAM Authentication services
+ **/
+/**
+ * pam_sm_authenticate
+ **/
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
-    int argc, const char **argv)
+ int argc, const char **argv)
 {
-  int retval;
-  int err;
-  const char *user;
-  const char *rhost;
-  char *passwd = NULL;
-  pam_mysql_ctx_t *ctx = NULL;
-  char **resps = NULL; 
-  int passwd_is_local = 0;
+ int retval;
+ int err;
+ const char *user;
+ const char *rhost;
+ char *passwd = NULL;
+ pam_mysql_ctx_t *ctx = NULL;
+ char **resps = NULL;
+ int passwd_is_local = 0;
 
-  switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      return PAM_BUF_ERR;
+ case PAM_MYSQL_ERR_ALLOC:
+ return PAM_BUF_ERR;
 
-    default:
-      return PAM_SERVICE_ERR;
-  }
+ default:
+ return PAM_SERVICE_ERR;
+ }
 
-  switch (pam_mysql_parse_args(ctx, argc, argv)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_parse_args(ctx, argc, argv)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  if (ctx->config_file != NULL) {
-    switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
+ if (ctx->config_file != NULL) {
+ switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-      default:
-        break;
-    }
-  }
+ default:
+ break;
+ }
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_authenticate() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_authenticate() called.");
+ }
 
-  /* Get User */
-  if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
-          NULL))) {
-    goto out;
-  }
+ /* Get User */
+ if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
+ NULL))) {
+ goto out;
+ }
 
-  if (user == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
-    retval = PAM_USER_UNKNOWN;
-    goto out;
-  } 
+ if (user == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+ }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
-        (PAM_GET_ITEM_CONST void **)&rhost)) {
-    case PAM_SUCCESS:
-      break;
+ switch (pam_get_item(pamh, PAM_RHOST,
+ (PAM_GET_ITEM_CONST void **)&rhost)) {
+ case PAM_SUCCESS:
+ break;
 
-    default:
-      rhost = NULL;
-  }
+ default:
+ rhost = NULL;
+ }
 
-  if (ctx->use_first_pass || ctx->try_first_pass) {
-    retval = pam_get_item(pamh, PAM_AUTHTOK,
-        (PAM_GET_ITEM_CONST void **)&passwd);
+ if (ctx->use_first_pass || ctx->try_first_pass) {
+ retval = pam_get_item(pamh, PAM_AUTHTOK,
+ (PAM_GET_ITEM_CONST void **)&passwd);
 
-    switch (retval) {
-      case PAM_SUCCESS:
-        break;
+ switch (retval) {
+ case PAM_SUCCESS:
+ break;
 
-      case PAM_NO_MODULE_DATA:
-        passwd = NULL;
-        goto askpass;
+ case PAM_NO_MODULE_DATA:
+ passwd = NULL;
+ goto askpass;
 
-      default:
-        retval = PAM_AUTH_ERR;
-        goto out;
-    }
+ default:
+ retval = PAM_AUTH_ERR;
+ goto out;
+ }
 
-    switch (pam_mysql_open_db(ctx)) {
-      case PAM_MYSQL_ERR_BUSY:
-      case PAM_MYSQL_ERR_SUCCESS:
-        break;
+ switch (pam_mysql_open_db(ctx)) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-      case PAM_MYSQL_ERR_DB:
-        retval = PAM_AUTHINFO_UNAVAIL;
-        goto out;
+ case PAM_MYSQL_ERR_DB:
+ retval = PAM_AUTHINFO_UNAVAIL;
+ goto out;
 
-      default:
-        retval = PAM_SERVICE_ERR;
-        goto out;
-    }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-    err = pam_mysql_check_passwd(ctx, user, passwd,
-        !(flags & PAM_DISALLOW_NULL_AUTHTOK));
+ err = pam_mysql_check_passwd(ctx, user, passwd,
+ !(flags & PAM_DISALLOW_NULL_AUTHTOK));
 
-    if (err == PAM_MYSQL_ERR_SUCCESS) {
-      pam_mysql_sql_log(ctx, "AUTHENTICATION SUCCESS (FIRST_PASS)", user, rhost);
-    } else {
-      pam_mysql_sql_log(ctx, "AUTHENTICATION FALURE (FIRST_PASS)", user, rhost);
-    }
+ if (err == PAM_MYSQL_ERR_SUCCESS) {
+ pam_mysql_sql_log(ctx, "AUTHENTICATION SUCCESS (FIRST_PASS)", user, rhost);
+ } else {
+ pam_mysql_sql_log(ctx, "AUTHENTICATION FALURE (FIRST_PASS)", user, rhost);
+ }
 
-    switch (err) {
-      case PAM_MYSQL_ERR_SUCCESS:
-        if (ctx->use_first_pass || ctx->try_first_pass) {
-          retval = PAM_SUCCESS;
-          goto out;
-        }
-        break;
+ switch (err) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ if (ctx->use_first_pass || ctx->try_first_pass) {
+ retval = PAM_SUCCESS;
+ goto out;
+ }
+ break;
 
-      case PAM_MYSQL_ERR_NO_ENTRY:
-        if (ctx->use_first_pass) {
-          retval = PAM_USER_UNKNOWN;
-          goto out;
-        }
-        break;
+ case PAM_MYSQL_ERR_NO_ENTRY:
+ if (ctx->use_first_pass) {
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+ }
+ break;
 
-      case PAM_MYSQL_ERR_MISMATCH:
-        if (ctx->use_first_pass) {
-          retval = PAM_AUTH_ERR;
-          goto out;
-        }
-        break;
+ case PAM_MYSQL_ERR_MISMATCH:
+ if (ctx->use_first_pass) {
+ retval = PAM_AUTH_ERR;
+ goto out;
+ }
+ break;
 
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-      default:
-        retval = PAM_SERVICE_ERR;
-        goto out;
-    }
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+ }
 
 askpass:
-  switch (pam_mysql_converse(ctx, &resps, pamh, 1,
-        PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_PASSWORD)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_converse(ctx, &resps, pamh, 1,
+ PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_PASSWORD)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  passwd = resps[0];
-  passwd_is_local = 1;
-  resps[0] = NULL;
-  xfree(resps);
+ passwd = resps[0];
+ passwd_is_local = 1;
+ resps[0] = NULL;
+ xfree(resps);
 
-  if (passwd == NULL) {
-    if (ctx->verbose) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "failed to retrieve authentication token.");
-    }
-    retval = PAM_AUTH_ERR;
-    goto out;
-  }
+ if (passwd == NULL) {
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "failed to retrieve authentication token.");
+ }
+ retval = PAM_AUTH_ERR;
+ goto out;
+ }
 
-  if (passwd_is_local) {
-    (void) pam_set_item(pamh, PAM_AUTHTOK, passwd);
-  }
+ if (passwd_is_local) {
+ (void) pam_set_item(pamh, PAM_AUTHTOK, passwd);
+ }
 
-  switch (pam_mysql_open_db(ctx)) {
-    case PAM_MYSQL_ERR_BUSY:
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_open_db(ctx)) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    case PAM_MYSQL_ERR_DB:
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto out;
+ case PAM_MYSQL_ERR_DB:
+ retval = PAM_AUTHINFO_UNAVAIL;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  err = pam_mysql_check_passwd(ctx, user, passwd,
-      !(flags & PAM_DISALLOW_NULL_AUTHTOK));
+ err = pam_mysql_check_passwd(ctx, user, passwd,
+ !(flags & PAM_DISALLOW_NULL_AUTHTOK));
 
-  if (err == PAM_MYSQL_ERR_SUCCESS) {
-    pam_mysql_sql_log(ctx, "AUTHENTICATION SUCCESS", user, rhost);
-  } else {
-    pam_mysql_sql_log(ctx, "AUTHENTICATION FAILURE", user, rhost);
-  }
+ if (err == PAM_MYSQL_ERR_SUCCESS) {
+ pam_mysql_sql_log(ctx, "AUTHENTICATION SUCCESS", user, rhost);
+ } else {
+ pam_mysql_sql_log(ctx, "AUTHENTICATION FAILURE", user, rhost);
+ }
 
-  switch (err) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      retval = PAM_SUCCESS;
-      break;
+ switch (err) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ retval = PAM_SUCCESS;
+ break;
 
-    case PAM_MYSQL_ERR_NO_ENTRY:
-      retval = PAM_USER_UNKNOWN;
-      goto out;
+ case PAM_MYSQL_ERR_NO_ENTRY:
+ retval = PAM_USER_UNKNOWN;
+ goto out;
 
-    case PAM_MYSQL_ERR_MISMATCH:
-      retval = PAM_AUTH_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_MISMATCH:
+ retval = PAM_AUTH_ERR;
+ goto out;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
 out:
-  if (ctx->disconnect_every_op) {
-    pam_mysql_close_db(ctx);
-  }
+ if (ctx->disconnect_every_op) {
+ pam_mysql_close_db(ctx);
+ }
 
-  if (passwd != NULL && passwd_is_local) {
-    xfree_overwrite(passwd);
-  }
+ if (passwd != NULL && passwd_is_local) {
+ xfree_overwrite(passwd);
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_authenticate() returning %d.", retval);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_authenticate() returning %d.", retval);
+ }
 
-  return retval;
+ return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_acct_mgmt
-*/
+/**
+ * pam_sm_acct_mgmt
+ **/
 PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags, int argc,
-    const char **argv)
+ const char **argv)
 {
-  int retval;
-  int err;
-  int stat;
-  const char *user;
-  const char *rhost;
-  pam_mysql_ctx_t *ctx = NULL;
+ int retval;
+ int err;
+ int stat;
+ const char *user;
+ const char *rhost;
+ pam_mysql_ctx_t *ctx = NULL;
 
-  switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      return PAM_BUF_ERR;
+ case PAM_MYSQL_ERR_ALLOC:
+ return PAM_BUF_ERR;
 
-    default:
-      return PAM_SERVICE_ERR;
-  }
+ default:
+ return PAM_SERVICE_ERR;
+ }
 
-  switch (pam_mysql_parse_args(ctx, argc, argv)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_parse_args(ctx, argc, argv)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  if (ctx->config_file != NULL) {
-    switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
+ if (ctx->config_file != NULL) {
+ switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-      default:
-        break;
-    }
-  }
+ default:
+ break;
+ }
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_acct_mgmt() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_acct_mgmt() called.");
+ }
 
-  /* Get User */
-  if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
-          NULL))) {
-    goto out;
-  }
+ /* Get User */
+ if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
+ NULL))) {
+ goto out;
+ }
 
-  if (user == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
-    retval = PAM_USER_UNKNOWN;
-    goto out;
-  } 
+ if (user == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+ }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
-        (PAM_GET_ITEM_CONST void **)&rhost)) {
-    case PAM_SUCCESS:
-      break;
+ switch (pam_get_item(pamh, PAM_RHOST,
+ (PAM_GET_ITEM_CONST void **)&rhost)) {
+ case PAM_SUCCESS:
+ break;
 
-    default:
-      rhost = NULL;
-  }
+ default:
+ rhost = NULL;
+ }
 
-  switch (pam_mysql_open_db(ctx)) {
-    case PAM_MYSQL_ERR_BUSY:
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_open_db(ctx)) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    case PAM_MYSQL_ERR_DB:
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto out;
+ case PAM_MYSQL_ERR_DB:
+ retval = PAM_AUTHINFO_UNAVAIL;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  err = pam_mysql_query_user_stat(ctx, &stat, user);
+ err = pam_mysql_query_user_stat(ctx, &stat, user);
 
-  if (err == PAM_MYSQL_ERR_SUCCESS) {
-    pam_mysql_sql_log(ctx, "QUERYING SUCCESS", user, rhost);
-  } else {
-    pam_mysql_sql_log(ctx, "QUERYING FAILURE", user, rhost);
-  }
+ if (err == PAM_MYSQL_ERR_SUCCESS) {
+ pam_mysql_sql_log(ctx, "QUERYING SUCCESS", user, rhost);
+ } else {
+ pam_mysql_sql_log(ctx, "QUERYING FAILURE", user, rhost);
+ }
 
-  switch (err) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      retval = PAM_SUCCESS;
-      break;
+ switch (err) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ retval = PAM_SUCCESS;
+ break;
 
-    case PAM_MYSQL_ERR_NO_ENTRY:
-      retval = PAM_USER_UNKNOWN;
-      goto out;
+ case PAM_MYSQL_ERR_NO_ENTRY:
+ retval = PAM_USER_UNKNOWN;
+ goto out;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  if (stat & PAM_MYSQL_USER_STAT_EXPIRED) {
-    retval = PAM_ACCT_EXPIRED;
-  } else if (stat & PAM_MYSQL_USER_STAT_AUTHTOK_EXPIRED) {
-    if (stat & PAM_MYSQL_USER_STAT_NULL_PASSWD) {
+ if (stat & PAM_MYSQL_USER_STAT_EXPIRED) {
+ retval = PAM_ACCT_EXPIRED;
+ } else if (stat & PAM_MYSQL_USER_STAT_AUTHTOK_EXPIRED) {
+ if (stat & PAM_MYSQL_USER_STAT_NULL_PASSWD) {
 #if defined(HAVE_PAM_NEW_AUTHTOK_REQD)
-      retval = PAM_NEW_AUTHTOK_REQD;
+ retval = PAM_NEW_AUTHTOK_REQD;
 #else
-      retval = PAM_AUTHTOK_EXPIRED;
+ retval = PAM_AUTHTOK_EXPIRED;
 #endif
-    } else {
-      retval = PAM_AUTHTOK_EXPIRED;
-    }
-  }
+ } else {
+ retval = PAM_AUTHTOK_EXPIRED;
+ }
+ }
 
 out:
-  if (ctx->disconnect_every_op) {
-    pam_mysql_close_db(ctx);
-  }
+ if (ctx->disconnect_every_op) {
+ pam_mysql_close_db(ctx);
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_acct_mgmt() returning %i.",retval);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_acct_mgmt() returning %i.",retval);
+ }
 
-  return retval;
+ return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_setcred
-*/
+/**
+ * pam_sm_setcred
+ **/
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
-    const char **argv)
+ const char **argv)
 {
 #ifdef DEBUG
-  syslog(LOG_INFO, "%s", PAM_MYSQL_LOG_PREFIX "setcred called but not implemented.");
+ syslog(LOG_INFO, "%s", PAM_MYSQL_LOG_PREFIX "setcred called but not implemented.");
 #endif
-  return PAM_SUCCESS;
+ return PAM_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_sm_chauthtok
-*/
+/**
+ * pam_sm_chauthtok
+ **/
 PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
-    const char **argv)
+ const char **argv)
 {
-  int retval;
-  int err;
-  const char *user;
-  const char *rhost;
-  char *old_passwd = NULL;
-  char *first_enter = NULL;
-  char *new_passwd = NULL;
-  int old_passwd_should_be_freed = 0;
-  int new_passwd_is_local = 0;
-  int caps = 0;
-  int stat = 0;
-  pam_mysql_ctx_t *ctx = NULL;
-
-  switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
-
-    case PAM_MYSQL_ERR_ALLOC:
-      return PAM_BUF_ERR;
-
-    default:
-      return PAM_SERVICE_ERR;
-  }
-
-  switch (pam_mysql_parse_args(ctx, argc, argv)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
-
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
-
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
-
-  if (ctx->config_file != NULL) {
-    switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
-
-      default:
-        break;
-    }
-  }
-
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_chauthtok() called.");
-  }
-
-  /* Get User */
-  if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
-          NULL))) {
-    goto out;
-  }
-
-  if (user == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
-    retval = PAM_USER_UNKNOWN;
-    goto out;
-  }
-
-  switch (pam_get_item(pamh, PAM_RHOST,
-        (PAM_GET_ITEM_CONST void **)&rhost)) {
-    case PAM_SUCCESS:
-      break;
-
-    default:
-      rhost = NULL;
-  }
-
-  err = pam_mysql_open_db(ctx);
-
-  if (flags & PAM_PRELIM_CHECK) {
-    switch (err) {
-      case PAM_MYSQL_ERR_BUSY:
-      case PAM_MYSQL_ERR_SUCCESS:
-        break;
-
-      default:
-        retval = PAM_TRY_AGAIN;
-        goto out;
-    }
-  } else {
-    switch (err) {
-      case PAM_MYSQL_ERR_BUSY:
-      case PAM_MYSQL_ERR_SUCCESS:
-        break;
-
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
-
-      case PAM_MYSQL_ERR_DB:
-        retval = PAM_PERM_DENIED;
-        goto out;
-
-      default:
-        retval = PAM_SERVICE_ERR;
-        goto out;
-    }
-  }
-
-  if (!(flags & PAM_UPDATE_AUTHTOK)) {
-    goto out;
-  }
-
-  err = pam_mysql_query_user_caps(ctx, &caps, user);
-
-  switch (err) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      retval = PAM_SUCCESS;
-      break;
-
-    case PAM_MYSQL_ERR_NO_ENTRY:
-      retval = PAM_SUCCESS;
-      caps = 0;
-      break;
-
-    default:
-      retval = PAM_PERM_DENIED;
-      goto out;
-  }
-
-  if (!(caps & (PAM_MYSQL_CAP_CHAUTHTOK_SELF
-          | PAM_MYSQL_CAP_CHAUTHTOK_OTHERS))) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "User is not allowed to change the authentication token.");
-    retval = PAM_PERM_DENIED;
-    goto out;
-  }
-
-  err = pam_mysql_query_user_stat(ctx, &stat, user);
-
-  if (err == PAM_MYSQL_ERR_SUCCESS) {
-    pam_mysql_sql_log(ctx, "QUERYING SUCCESS", user, rhost);
-  } else {
-    pam_mysql_sql_log(ctx, "QUERYING FAILURE", user, rhost);
-  }
-
-  switch (err) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      retval = PAM_SUCCESS;
-      break;
-
-    default:
-      retval = PAM_PERM_DENIED;
-      goto out;
-  }
-
-  if (!(flags & PAM_CHANGE_EXPIRED_AUTHTOK) &&
-      (stat & PAM_MYSQL_USER_STAT_EXPIRED)) {
-    retval = PAM_AUTHTOK_LOCK_BUSY;
-    goto out;
-  }
-
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "update authentication token");
-  }
-
-  if (!(caps & PAM_MYSQL_CAP_CHAUTHTOK_OTHERS) &&
-      !(stat & PAM_MYSQL_USER_STAT_NULL_PASSWD)) {
-    if (ctx->use_first_pass || ctx->try_first_pass) {
-      retval = pam_get_item(pamh, PAM_OLDAUTHTOK,
-          (PAM_GET_ITEM_CONST void **)&old_passwd);
-      switch (retval) {
-        case PAM_SUCCESS:
-          break;
-
-        case PAM_NO_MODULE_DATA:
-          old_passwd = NULL; 
-          break;
-
-        default:
-          retval = PAM_AUTHTOK_ERR;
-          goto out;
-      }
-
-      if (old_passwd != NULL) {
-        switch (pam_mysql_check_passwd(ctx, user, old_passwd, 0)) {
-          case PAM_MYSQL_ERR_SUCCESS:
-            retval = PAM_SUCCESS;
-            break;
-
-          case PAM_MYSQL_ERR_NO_ENTRY:
-            retval = PAM_USER_UNKNOWN;
-            goto out;
-
-          case PAM_MYSQL_ERR_MISMATCH:
-            if (ctx->use_first_pass) {
-              retval = PAM_AUTH_ERR;
-              goto out;
-            }
-            retval = PAM_SUCCESS;
-            break;
-
-          case PAM_MYSQL_ERR_ALLOC:
-            retval = PAM_BUF_ERR;
-            goto out;
-
-          default:
-            retval = PAM_SERVICE_ERR;
-            goto out;
-        }
-      }
-    }
-
-    if (!ctx->use_first_pass) {
-      char **resps;
-
-      if (flags & PAM_SILENT) {
-        retval = PAM_AUTHTOK_RECOVERY_ERR;
-        goto out;
-      }
-
-      switch (pam_mysql_converse(ctx, &resps, pamh, 1,
-            PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_OLD_PASSWORD)) {
-        case PAM_MYSQL_ERR_SUCCESS:
-          break;
-
-        default:
-          retval = PAM_SERVICE_ERR;
-          goto out;
-      }
-      old_passwd = resps[0];
-      old_passwd_should_be_freed = 1;
-      resps[0] = NULL;
-      xfree(resps);
-
-      if (old_passwd == NULL) {
-        retval = PAM_AUTHTOK_RECOVERY_ERR;
-        goto out;
-      }
-
-      switch (pam_mysql_check_passwd(ctx, user, old_passwd, 0)) {
-        case PAM_MYSQL_ERR_SUCCESS:
-          retval = PAM_SUCCESS;
-          break;
-
-        case PAM_MYSQL_ERR_NO_ENTRY:
-          retval = PAM_USER_UNKNOWN;
-          goto out;
-
-        case PAM_MYSQL_ERR_MISMATCH:
-          retval = PAM_AUTH_ERR;
-          goto out;
-
-        case PAM_MYSQL_ERR_ALLOC:
-          retval = PAM_BUF_ERR;
-          goto out;
-
-        default:
-          retval = PAM_SERVICE_ERR;
-          goto out;
-      }
-
-      if ((retval = pam_set_item(pamh, PAM_OLDAUTHTOK,
-              old_passwd)) != PAM_SUCCESS) {
-        goto out;
-      }
-    }
-  }
-
-  retval = pam_get_item(pamh, PAM_AUTHTOK,
-      (PAM_GET_ITEM_CONST void **)&new_passwd);
-
-  switch (retval) {
-    case PAM_SUCCESS:
-      break;
-
-    case PAM_NO_MODULE_DATA:
-      new_passwd = NULL; 
-      break;
-
-    default:
-      retval = PAM_AUTHTOK_ERR;
-      goto out;
-  }
-
-  if (new_passwd == NULL) {
-    char **resps;
-
-    if (ctx->use_first_pass) {
-      retval = PAM_AUTHTOK_RECOVERY_ERR;
-      goto out;
-    }
-
-    if (flags & PAM_SILENT) {
-      retval = PAM_AUTHTOK_RECOVERY_ERR;
-      goto out;
-    }
-
-    if (ctx->verbose) {
-      syslog(LOG_AUTHPRIV | LOG_ERR, "Asking for new password (1)");
-    }
-
-    switch (pam_mysql_converse(ctx, &resps, pamh, 1,
-          PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_NEW_PASSWORD)) {
-      case PAM_MYSQL_ERR_SUCCESS:
-        break;
-
-      default:
-        retval = PAM_SERVICE_ERR;
-        goto out;
-    }
-
-    first_enter = resps[0];
-    resps[0] = NULL;
-    xfree(resps);
-
-    switch (pam_mysql_converse(ctx, &resps, pamh, 1,
-          PAM_PROMPT_ECHO_OFF, PLEASE_REENTER_NEW_PASSWORD)) {
-      case PAM_MYSQL_ERR_SUCCESS:
-        break;
-
-      default:
-        retval = PAM_SERVICE_ERR;
-        goto out;
-    }
-
-    new_passwd = resps[0];
-    new_passwd_is_local = 1;
-    resps[0] = NULL;
-    xfree(resps);
-
-    if (new_passwd == NULL || strcmp(first_enter, new_passwd) != 0) {
-      retval = PAM_AUTHTOK_RECOVERY_ERR;
-      goto out;
-    }
-  }
-
-  switch (pam_mysql_update_passwd(ctx, user, new_passwd)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      if (new_passwd_is_local) {
-        (void) pam_set_item(pamh, PAM_AUTHTOK, new_passwd);
-      }
-      retval = PAM_SUCCESS;
-      break;
-
-    default:
-      retval = PAM_AUTHTOK_ERR;
-      break;
-  }
-
-  if (retval == PAM_SUCCESS) {
-    pam_mysql_sql_log(ctx, "ALTERATION SUCCESS", user, rhost);
-  } else {
-    pam_mysql_sql_log(ctx, "ALTERATION FAILURE", user, rhost);
-  }
+ int retval;
+ int err;
+ const char *user;
+ const char *rhost;
+ char *old_passwd = NULL;
+ char *first_enter = NULL;
+ char *new_passwd = NULL;
+ int old_passwd_should_be_freed = 0;
+ int new_passwd_is_local = 0;
+ int caps = 0;
+ int stat = 0;
+ pam_mysql_ctx_t *ctx = NULL;
+
+ switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ case PAM_MYSQL_ERR_ALLOC:
+ return PAM_BUF_ERR;
+
+ default:
+ return PAM_SERVICE_ERR;
+ }
+
+ switch (pam_mysql_parse_args(ctx, argc, argv)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+
+ if (ctx->config_file != NULL) {
+ switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
+
+ default:
+ break;
+ }
+ }
+
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_chauthtok() called.");
+ }
+
+ /* Get User */
+ if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
+ NULL))) {
+ goto out;
+ }
+
+ if (user == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+ }
+
+ switch (pam_get_item(pamh, PAM_RHOST,
+ (PAM_GET_ITEM_CONST void **)&rhost)) {
+ case PAM_SUCCESS:
+ break;
+
+ default:
+ rhost = NULL;
+ }
+
+ err = pam_mysql_open_db(ctx);
+
+ if (flags & PAM_PRELIM_CHECK) {
+ switch (err) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ default:
+ retval = PAM_TRY_AGAIN;
+ goto out;
+ }
+ } else {
+ switch (err) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
+
+ case PAM_MYSQL_ERR_DB:
+ retval = PAM_PERM_DENIED;
+ goto out;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+ }
+
+ if (!(flags & PAM_UPDATE_AUTHTOK)) {
+ goto out;
+ }
+
+ err = pam_mysql_query_user_caps(ctx, &caps, user);
+
+ switch (err) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ retval = PAM_SUCCESS;
+ break;
+
+ case PAM_MYSQL_ERR_NO_ENTRY:
+ retval = PAM_SUCCESS;
+ caps = 0;
+ break;
+
+ default:
+ retval = PAM_PERM_DENIED;
+ goto out;
+ }
+
+ if (!(caps & (PAM_MYSQL_CAP_CHAUTHTOK_SELF
+ | PAM_MYSQL_CAP_CHAUTHTOK_OTHERS))) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "User is not allowed to change the authentication token.");
+ retval = PAM_PERM_DENIED;
+ goto out;
+ }
+
+ err = pam_mysql_query_user_stat(ctx, &stat, user);
+
+ if (err == PAM_MYSQL_ERR_SUCCESS) {
+ pam_mysql_sql_log(ctx, "QUERYING SUCCESS", user, rhost);
+ } else {
+ pam_mysql_sql_log(ctx, "QUERYING FAILURE", user, rhost);
+ }
+
+ switch (err) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ retval = PAM_SUCCESS;
+ break;
+
+ default:
+ retval = PAM_PERM_DENIED;
+ goto out;
+ }
+
+ if (!(flags & PAM_CHANGE_EXPIRED_AUTHTOK) &&
+ (stat & PAM_MYSQL_USER_STAT_EXPIRED)) {
+ retval = PAM_AUTHTOK_LOCK_BUSY;
+ goto out;
+ }
+
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "update authentication token");
+ }
+
+ if (!(caps & PAM_MYSQL_CAP_CHAUTHTOK_OTHERS) &&
+ !(stat & PAM_MYSQL_USER_STAT_NULL_PASSWD)) {
+ if (ctx->use_first_pass || ctx->try_first_pass) {
+ retval = pam_get_item(pamh, PAM_OLDAUTHTOK,
+ (PAM_GET_ITEM_CONST void **)&old_passwd);
+ switch (retval) {
+ case PAM_SUCCESS:
+ break;
+
+ case PAM_NO_MODULE_DATA:
+ old_passwd = NULL;
+ break;
+
+ default:
+ retval = PAM_AUTHTOK_ERR;
+ goto out;
+ }
+
+ if (old_passwd != NULL) {
+ switch (pam_mysql_check_passwd(ctx, user, old_passwd, 0)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ retval = PAM_SUCCESS;
+ break;
+
+ case PAM_MYSQL_ERR_NO_ENTRY:
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+
+ case PAM_MYSQL_ERR_MISMATCH:
+ if (ctx->use_first_pass) {
+ retval = PAM_AUTH_ERR;
+ goto out;
+ }
+ retval = PAM_SUCCESS;
+ break;
+
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+ }
+ }
+
+ if (!ctx->use_first_pass) {
+ char **resps;
+
+ if (flags & PAM_SILENT) {
+ retval = PAM_AUTHTOK_RECOVERY_ERR;
+ goto out;
+ }
+
+ switch (pam_mysql_converse(ctx, &resps, pamh, 1,
+ PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_OLD_PASSWORD)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+ old_passwd = resps[0];
+ old_passwd_should_be_freed = 1;
+ resps[0] = NULL;
+ xfree(resps);
+
+ if (old_passwd == NULL) {
+ retval = PAM_AUTHTOK_RECOVERY_ERR;
+ goto out;
+ }
+
+ switch (pam_mysql_check_passwd(ctx, user, old_passwd, 0)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ retval = PAM_SUCCESS;
+ break;
+
+ case PAM_MYSQL_ERR_NO_ENTRY:
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+
+ case PAM_MYSQL_ERR_MISMATCH:
+ retval = PAM_AUTH_ERR;
+ goto out;
+
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+
+ if ((retval = pam_set_item(pamh, PAM_OLDAUTHTOK,
+ old_passwd)) != PAM_SUCCESS) {
+ goto out;
+ }
+ }
+ }
+
+ retval = pam_get_item(pamh, PAM_AUTHTOK,
+ (PAM_GET_ITEM_CONST void **)&new_passwd);
+
+ switch (retval) {
+ case PAM_SUCCESS:
+ break;
+
+ case PAM_NO_MODULE_DATA:
+ new_passwd = NULL;
+ break;
+
+ default:
+ retval = PAM_AUTHTOK_ERR;
+ goto out;
+ }
+
+ if (new_passwd == NULL) {
+ char **resps;
+
+ if (ctx->use_first_pass) {
+ retval = PAM_AUTHTOK_RECOVERY_ERR;
+ goto out;
+ }
+
+ if (flags & PAM_SILENT) {
+ retval = PAM_AUTHTOK_RECOVERY_ERR;
+ goto out;
+ }
+
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, "Asking for new password (1)");
+ }
+
+ switch (pam_mysql_converse(ctx, &resps, pamh, 1,
+ PAM_PROMPT_ECHO_OFF, PLEASE_ENTER_NEW_PASSWORD)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+
+ first_enter = resps[0];
+ resps[0] = NULL;
+ xfree(resps);
+
+ switch (pam_mysql_converse(ctx, &resps, pamh, 1,
+ PAM_PROMPT_ECHO_OFF, PLEASE_REENTER_NEW_PASSWORD)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
+
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
+
+ new_passwd = resps[0];
+ new_passwd_is_local = 1;
+ resps[0] = NULL;
+ xfree(resps);
+
+ if (new_passwd == NULL || strcmp(first_enter, new_passwd) != 0) {
+ retval = PAM_AUTHTOK_RECOVERY_ERR;
+ goto out;
+ }
+ }
+
+ switch (pam_mysql_update_passwd(ctx, user, new_passwd)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ if (new_passwd_is_local) {
+ (void) pam_set_item(pamh, PAM_AUTHTOK, new_passwd);
+ }
+ retval = PAM_SUCCESS;
+ break;
+
+ default:
+ retval = PAM_AUTHTOK_ERR;
+ break;
+ }
+
+ if (retval == PAM_SUCCESS) {
+ pam_mysql_sql_log(ctx, "ALTERATION SUCCESS", user, rhost);
+ } else {
+ pam_mysql_sql_log(ctx, "ALTERATION FAILURE", user, rhost);
+ }
 
 out:
-  if (ctx->disconnect_every_op) {
-    pam_mysql_close_db(ctx);
-  }
+ if (ctx->disconnect_every_op) {
+ pam_mysql_close_db(ctx);
+ }
 
-  if (new_passwd != NULL && new_passwd_is_local) {
-    xfree_overwrite(new_passwd);
-  }
+ if (new_passwd != NULL && new_passwd_is_local) {
+ xfree_overwrite(new_passwd);
+ }
 
-  if (first_enter != NULL) {
-    xfree_overwrite(first_enter);
-  }
+ if (first_enter != NULL) {
+ xfree_overwrite(first_enter);
+ }
 
-  if (old_passwd != NULL && old_passwd_should_be_freed) {
-    xfree_overwrite(old_passwd);
-  }
+ if (old_passwd != NULL && old_passwd_should_be_freed) {
+ xfree_overwrite(old_passwd);
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_chauthtok() returning %d.", retval);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_chauthtok() returning %d.", retval);
+ }
 
-  return retval;
+ return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_open_session
-*/
+/**
+ * pam_sm_open_session
+ **/
 PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
-    const char **argv)
+ const char **argv)
 {
-  int retval;
-  pam_mysql_ctx_t *ctx = NULL;
-  const char *user;
-  const char *rhost;
+ int retval;
+ pam_mysql_ctx_t *ctx = NULL;
+ const char *user;
+ const char *rhost;
 
-  switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      return PAM_BUF_ERR;
+ case PAM_MYSQL_ERR_ALLOC:
+ return PAM_BUF_ERR;
 
-    default:
-      return PAM_SERVICE_ERR;
-  }
+ default:
+ return PAM_SERVICE_ERR;
+ }
 
-  switch (pam_mysql_parse_args(ctx, argc, argv)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_parse_args(ctx, argc, argv)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  if (ctx->config_file != NULL) {
-    switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
+ if (ctx->config_file != NULL) {
+ switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-      default:
-        break;
-    }
-  }
+ default:
+ break;
+ }
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_open_session() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_open_session() called.");
+ }
 
-  /* Get User */
-  if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
-          NULL))) {
-    goto out;
-  }
+ /* Get User */
+ if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
+ NULL))) {
+ goto out;
+ }
 
-  if (user == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
-    retval = PAM_USER_UNKNOWN;
-    goto out;
-  }
+ if (user == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+ }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
-        (PAM_GET_ITEM_CONST void **)&rhost)) {
-    case PAM_SUCCESS:
-      break;
+ switch (pam_get_item(pamh, PAM_RHOST,
+ (PAM_GET_ITEM_CONST void **)&rhost)) {
+ case PAM_SUCCESS:
+ break;
 
-    default:
-      rhost = NULL;
-  }
+ default:
+ rhost = NULL;
+ }
 
-  switch (pam_mysql_open_db(ctx)) {
-    case PAM_MYSQL_ERR_BUSY:
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_open_db(ctx)) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    case PAM_MYSQL_ERR_DB:
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto out;
+ case PAM_MYSQL_ERR_DB:
+ retval = PAM_AUTHINFO_UNAVAIL;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  pam_mysql_sql_log(ctx, "OPEN SESSION", user, rhost);
+ pam_mysql_sql_log(ctx, "OPEN SESSION", user, rhost);
 
 out:
-  if (ctx->disconnect_every_op) {
-    pam_mysql_close_db(ctx);
-  }
+ if (ctx->disconnect_every_op) {
+ pam_mysql_close_db(ctx);
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_open_session() returning %i.", retval);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_open_session() returning %i.", retval);
+ }
 
-  return retval;
+ return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_close_session
-*/
+/**
+ * pam_sm_close_session
+ **/
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
-    const char **argv)
+ const char **argv)
 {
-  int retval;
-  pam_mysql_ctx_t *ctx = NULL;
-  const char *user;
-  const char *rhost;
+ int retval;
+ pam_mysql_ctx_t *ctx = NULL;
+ const char *user;
+ const char *rhost;
 
-  switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_retrieve_ctx(&ctx, pamh)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      return PAM_BUF_ERR;
+ case PAM_MYSQL_ERR_ALLOC:
+ return PAM_BUF_ERR;
 
-    default:
-      return PAM_SERVICE_ERR;
-  }
+ default:
+ return PAM_SERVICE_ERR;
+ }
 
-  switch (pam_mysql_parse_args(ctx, argc, argv)) {
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_parse_args(ctx, argc, argv)) {
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  if (ctx->config_file != NULL) {
-    switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
-      case PAM_MYSQL_ERR_ALLOC:
-        retval = PAM_BUF_ERR;
-        goto out;
+ if (ctx->config_file != NULL) {
+ switch (pam_mysql_read_config_file(ctx, ctx->config_file)) {
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-      default:
-        break;
-    }
-  }
+ default:
+ break;
+ }
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_close_session() called.");
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_close_session() called.");
+ }
 
-  /* Get User */
-  if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
-          NULL))) {
-    goto out;
-  }
+ /* Get User */
+ if ((retval = pam_get_user(pamh, (PAM_GET_USER_CONST char **)&user,
+ NULL))) {
+ goto out;
+ }
 
-  if (user == NULL) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
-    retval = PAM_USER_UNKNOWN;
-    goto out;
-  } 
+ if (user == NULL) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "no user specified.");
+ retval = PAM_USER_UNKNOWN;
+ goto out;
+ }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
-        (PAM_GET_ITEM_CONST void **)&rhost)) {
-    case PAM_SUCCESS:
-      break;
+ switch (pam_get_item(pamh, PAM_RHOST,
+ (PAM_GET_ITEM_CONST void **)&rhost)) {
+ case PAM_SUCCESS:
+ break;
 
-    default:
-      rhost = NULL;
-  }
+ default:
+ rhost = NULL;
+ }
 
-  switch (pam_mysql_open_db(ctx)) {
-    case PAM_MYSQL_ERR_BUSY:
-    case PAM_MYSQL_ERR_SUCCESS:
-      break;
+ switch (pam_mysql_open_db(ctx)) {
+ case PAM_MYSQL_ERR_BUSY:
+ case PAM_MYSQL_ERR_SUCCESS:
+ break;
 
-    case PAM_MYSQL_ERR_ALLOC:
-      retval = PAM_BUF_ERR;
-      goto out;
+ case PAM_MYSQL_ERR_ALLOC:
+ retval = PAM_BUF_ERR;
+ goto out;
 
-    case PAM_MYSQL_ERR_DB:
-      retval = PAM_AUTHINFO_UNAVAIL;
-      goto out;
+ case PAM_MYSQL_ERR_DB:
+ retval = PAM_AUTHINFO_UNAVAIL;
+ goto out;
 
-    default:
-      retval = PAM_SERVICE_ERR;
-      goto out;
-  }
+ default:
+ retval = PAM_SERVICE_ERR;
+ goto out;
+ }
 
-  pam_mysql_sql_log(ctx, "CLOSE SESSION", user, rhost);
+ pam_mysql_sql_log(ctx, "CLOSE SESSION", user, rhost);
 
 out:
-  if (ctx->disconnect_every_op) {
-    pam_mysql_close_db(ctx);
-  }
+ if (ctx->disconnect_every_op) {
+ pam_mysql_close_db(ctx);
+ }
 
-  if (ctx->verbose) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_close_session() returning %i.", retval);
-  }
+ if (ctx->verbose) {
+ syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_sm_close_session() returning %i.", retval);
+ }
 
-  return retval;
+ return retval;
 }
-/* }}} */
-/* }}} */
 
 /* end of module definition */
 
@@ -4639,13 +4620,13 @@ out:
 /* static module data */
 
 struct pam_module _pam_mysql_modstruct = {
-  PAM_MODULE_NAME,
-  pam_sm_authenticate,
-  pam_sm_setcred,
-  pam_sm_acct_mgmt,
-  pam_sm_open_session,
-  pam_sm_close_session,
-  pam_sm_chauthtok
+ PAM_MODULE_NAME,
+ pam_sm_authenticate,
+ pam_sm_setcred,
+ pam_sm_acct_mgmt,
+ pam_sm_open_session,
+ pam_sm_close_session,
+ pam_sm_chauthtok
 };
 
 #endif
