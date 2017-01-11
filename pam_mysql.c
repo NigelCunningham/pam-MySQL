@@ -164,6 +164,8 @@
 #define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
 #endif
 
+#include "memory.h"
+
 #ifndef my_make_scrambled_password
 #include "crypto.h"
 #include "crypto-sha1.h"
@@ -363,85 +365,6 @@ static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *, const char *msg,
     const char *user, const char *host);
 static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *, const char
     **pretval);
-
-static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len);
-static void *xcalloc(size_t nmemb, size_t size);
-static char *xstrdup(const char *ptr);
-static void xfree(void *ptr);
-static void xfree_overwrite(char *ptr);
-
-static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len)
-{
-  size_t cpy_len;
-  dest_size--;
-  cpy_len = (dest_size < src_len ? dest_size: src_len);
-
-  memcpy(dest, src, cpy_len);
-
-  dest[cpy_len] = '\0';
-
-  return cpy_len;
-}
-
-static void *xcalloc(size_t nmemb, size_t size)
-{
-  void *retval;
-  double v = ((double)size) * (int)(nmemb & (((size_t)-1) >> 1));
-
-  if (v != nmemb * size) {
-    return NULL;
-  }
-
-  retval = calloc(nmemb, size);
-
-  return retval;
-}
-
-static void *xrealloc(void *ptr, size_t nmemb, size_t size)
-{
-  void *retval;
-  size_t total = nmemb * size;
-
-  if (((double)size) * (int)(nmemb & (((size_t)-1) >> 1)) != total) {
-    return NULL;
-  }
-
-  retval = realloc(ptr, total);
-
-  return retval;
-}
-
-static char *xstrdup(const char *ptr)
-{
-  size_t len = strlen(ptr) + sizeof(char);
-  char *retval = xcalloc(sizeof(char), len);
-
-  if (retval == NULL) {
-    return NULL;
-  }
-
-  memcpy(retval, ptr, len);
-
-  return retval;
-}
-
-static void xfree(void *ptr)
-{
-  if (ptr != NULL) {
-    free(ptr);
-  }
-}
-
-static void xfree_overwrite(char *ptr)
-{
-  if (ptr != NULL) {
-    char *p;
-    for (p = ptr; *p != '\0'; p++) {
-      *p = '\0';
-    }
-    free(ptr);
-  }
-}
 
 static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
  size_t ndelims)
