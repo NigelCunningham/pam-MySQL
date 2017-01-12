@@ -1,9 +1,8 @@
-/**
- * String functions for pam-MySQL
+/*
+ * PAM module for MySQL
  *
  * Copyright (C) 1998-2005 Gunay Arslan and the contributors.
  * Copyright (C) 2015-2017 Nigel Cunningham and contributors.
- *
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,84 +34,47 @@
  * Sergey Matveychuk (OpenPAM support)
  * Package unmaintained for some years; now taken care of by Nigel Cunningham
  * https://github.com/NigelCunningham/pam-MySQL
- *
- * @TODO:
- * - Couldn't we use standard libc linkage? (Trust issues?)
  */
 
+#ifndef PAM_MYSQL_STRING_H
+
+#define PAM_MYSQL_STRING_H
+
 #include "common.h"
-#include "memory.h"
 
-size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len)
-{
-  size_t cpy_len;
-  dest_size--;
-  cpy_len = (dest_size < src_len ? dest_size: src_len);
+typedef struct _pam_mysql_str_t {
+  char *p;
+  size_t len;
+  size_t alloc_size;
+  int mangle;
+} pam_mysql_str_t;
 
-  memcpy(dest, src, cpy_len);
+/**
+ * pam_mysql_str_init()
+ **/
+extern pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle);
 
-  dest[cpy_len] = '\0';
+/**
+ * pam_mysql_str_destroy()
+ */
+extern void pam_mysql_str_destroy(pam_mysql_str_t *str);
 
-  return cpy_len;
-}
+/**
+ * pam_mysql_str_reserve()
+ **/
+extern pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len);
 
-void *xcalloc(size_t nmemb, size_t size)
-{
-  void *retval;
-  double v = ((double)size) * (int)(nmemb & (((size_t)-1) >> 1));
+/**
+ * pam_mysql_str_append()
+ **/
+extern pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str, const char
+    *s, size_t len);
 
-  if (v != nmemb * size) {
-    return NULL;
-  }
+extern pam_mysql_err_t pam_mysql_str_append_char(pam_mysql_str_t *str, char c);
 
-  retval = calloc(nmemb, size);
+/**
+ * pam_mysql_str_truncate()
+ **/
+extern pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len);
 
-  return retval;
-}
-
-void *xrealloc(void *ptr, size_t nmemb, size_t size)
-{
-  void *retval;
-  size_t total = nmemb * size;
-
-  if (((double)size) * (int)(nmemb & (((size_t)-1) >> 1)) != total) {
-    return NULL;
-  }
-
-  retval = realloc(ptr, total);
-
-  return retval;
-}
-
-char *xstrdup(const char *ptr)
-{
-  size_t len = strlen(ptr) + sizeof(char);
-  char *retval = xcalloc(sizeof(char), len);
-
-  if (retval == NULL) {
-    return NULL;
-  }
-
-  memcpy(retval, ptr, len);
-
-  return retval;
-}
-
-void xfree(void *ptr)
-{
-  if (ptr != NULL) {
-    free(ptr);
-  }
-}
-
-void xfree_overwrite(char *ptr)
-{
-  if (ptr != NULL) {
-    char *p;
-    for (p = ptr; *p != '\0'; p++) {
-      *p = '\0';
-    }
-    free(ptr);
-  }
-}
-
+#endif
