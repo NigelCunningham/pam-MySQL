@@ -36,10 +36,6 @@
  * https://github.com/NigelCunningham/pam-MySQL
  */
 
-#include "common.h"
-
-void pam_mysql_close_db(pam_mysql_ctx_t *);
-pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *);
-pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_str_t *append_to, const char *val, size_t val_len);
-pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
- pam_handle_t *pamh, size_t nargs, ...);
+#ifndef my_make_scrambled_password
+extern void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len);
+#endif

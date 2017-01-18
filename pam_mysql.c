@@ -43,63 +43,14 @@
  * modules' include files to define their prototypes.
  */
 
-#define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-#define PAM_SM_SESSION
-#define PAM_SM_PASSWORD
-
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-
-#ifndef PAM_EXTERN
-#define PAM_EXTERN
-#endif
-
-#ifndef LOG_AUTHPRIV
-#define LOG_AUTHPRIV LOG_AUTH
-#endif
-
-#ifdef LINUX_PAM_CONST_BUG
-#define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
-#endif
-
 #include "common.h"
 #include "memory.h"
 #include "configuration.h"
 #include "database.h"
-
 #include "drupal7.h"
 
-#ifndef my_make_scrambled_password
-#include "crypto.h"
-#include "crypto-sha1.h"
-
-// Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
-static void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len)
-{
-  SHA1_CTX ctx;
-  unsigned char h0[20], h1[20];
-
-  SHA1Init(&ctx);
-  SHA1Update(&ctx, password, strlen(password));
-  SHA1Final(h0, &ctx);
-  SHA1Init(&ctx);
-  SHA1Update(&ctx, h0, sizeof h0);
-#ifdef HAVE_EXPLICIT_BZERO
-  explicit_bzero(h0, len);
-#else
-  volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
-  size_t i = (size_t) 0U;
-
-  while (i < len) {
-    pnt_[i++] = 0U;
-  }
-#endif
-
-  SHA1Final(h1, &ctx);
-  *scrambled_password = '*';
-  hexify(scrambled_password + 1U, h1, 42, sizeof h1);
-}
+#ifndef HAVE_MAKE_SCRAMBLED_PASSWORD_323
+#include "my_make_scrambled_password.h"
 #endif
 
 #define PLEASE_ENTER_PASSWORD "Password:"
@@ -113,39 +64,6 @@ static void my_make_scrambled_password(char scrambled_password[42], const char p
 
 #define PAM_MYSQL_CAP_CHAUTHTOK_SELF 0x0001
 #define PAM_MYSQL_CAP_CHAUTHTOK_OTHERS 0x0002
-
-PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
-    const char **argv);
-PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const
-    char **argv);
-PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const
-    char **argv);
-PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const
-    char **argv);
-PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
-    const char **argv);
-PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
-    const char **argv);
-
-static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int status);
-
-static pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh);
-
-static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *);
-static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *);
-static void pam_mysql_saltify(pam_mysql_ctx_t *, char *salt, const char *salter );
-static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx, const char
-    *user, const char *passwd, int null_inhibited);
-static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *, const char
-    *user, const char *new_passwd);
-static pam_mysql_err_t pam_mysql_query_user_stat(pam_mysql_ctx_t *, int
-    *pretval, const char *user);
-static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *, int
-    *pretval, const char *user);
-static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *, const char *msg,
-    const char *user, const char *host);
-static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *, const char
-    **pretval);
 
 /**
  * pam_mysql_get_host_info
@@ -1379,133 +1297,6 @@ out:
 
  return err;
  }
-
-/**
- * pam_mysql_converse()
- **/
-static pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
- pam_handle_t *pamh, size_t nargs, ...)
-{
- pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
- int perr;
- struct pam_message **msgs = NULL;
- struct pam_message *bulk_msg_buf = NULL;
- struct pam_response *resps = NULL;
- struct pam_conv *conv = NULL;
- va_list ap;
- size_t i;
- char **retval = NULL;
-
- if (ctx->verbose) {
- syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_converse() called.");
- }
-
- va_start(ap, nargs);
-
- /* obtain conversation interface */
- if ((perr = pam_get_item(pamh, PAM_CONV,
- (PAM_GET_ITEM_CONST void **)&conv))) {
- syslog(LOG_AUTHPRIV | LOG_ERR,
- PAM_MYSQL_LOG_PREFIX "could not obtain coversation interface (reason: %s)", pam_strerror(pamh, perr));
- err = PAM_MYSQL_ERR_UNKNOWN;
- goto out;
- }
-
- /* build message array */
- if (NULL == (msgs = xcalloc(nargs, sizeof(struct pam_message *)))) {
-
- syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
- err = PAM_MYSQL_ERR_ALLOC;
- goto out;
- }
-
- for (i = 0; i < nargs; i++) {
- msgs[i] = NULL;
- }
-
- if (NULL == (bulk_msg_buf = xcalloc(nargs, sizeof(struct pam_message)))) {
-
- syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
- err = PAM_MYSQL_ERR_ALLOC;
- goto out;
- }
-
- for (i = 0; i < nargs; i++) {
- msgs[i] = &bulk_msg_buf[i];
- msgs[i]->msg_style = va_arg(ap, int);
- msgs[i]->msg = va_arg(ap, char *);
- }
-
- if (NULL == (retval = xcalloc(nargs + 1, sizeof(char **)))) {
- syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
- err = PAM_MYSQL_ERR_ALLOC;
- goto out;
- }
-
- for (i = 0; i < nargs; i++) {
- retval[i] = NULL;
- }
-
- switch ((perr = conv->conv(nargs,
- (PAM_CONV_CONST struct pam_message **)msgs, &resps,
- conv->appdata_ptr))) {
- case PAM_SUCCESS:
- break;
-
-#ifdef HAVE_PAM_CONV_AGAIN
- case PAM_CONV_AGAIN:
- break;
-#endif
- default:
- syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "conversation failure (reason: %s)",
- pam_strerror(pamh, perr));
- err = PAM_MYSQL_ERR_UNKNOWN;
- goto out;
- }
-
- for (i = 0; i < nargs; i++) {
- if (resps && resps[i].resp != NULL &&
- NULL == (retval[i] = xstrdup(resps[i].resp))) {
- syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
- err = PAM_MYSQL_ERR_ALLOC;
- goto out;
- }
- }
-
- retval[i] = NULL;
-
-out:
- if (resps != NULL) {
- size_t i;
- for (i = 0; i < nargs; i++) {
- xfree_overwrite(resps[i].resp);
- }
- xfree(resps);
- }
-
- if (bulk_msg_buf != NULL) {
- memset(bulk_msg_buf, 0, sizeof(*bulk_msg_buf) * nargs);
- xfree(bulk_msg_buf);
- }
-
- xfree(msgs);
-
- if (err) {
- if (retval != NULL) {
- for (i = 0; i < nargs; i++) {
- xfree_overwrite(retval[i]);
- retval[i] = NULL;
- }
- xfree(retval);
- }
- } else {
- *pretval = retval;
- }
-
- va_end(ap);
-
- return err;
-}
 
 /**
  * pam_mysql_query_user_caps

@@ -36,10 +36,36 @@
  * https://github.com/NigelCunningham/pam-MySQL
  */
 
+#ifndef my_make_scrambled_password
 #include "common.h"
+#include "memory.h"
+#include "crypto.h"
+#include "crypto-sha1.h"
 
-void pam_mysql_close_db(pam_mysql_ctx_t *);
-pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *);
-pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_str_t *append_to, const char *val, size_t val_len);
-pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
- pam_handle_t *pamh, size_t nargs, ...);
+// Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
+void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len)
+{
+  SHA1_CTX ctx;
+  unsigned char h0[20], h1[20];
+
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, password, strlen(password));
+  SHA1Final(h0, &ctx);
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, h0, sizeof h0);
+#ifdef HAVE_EXPLICIT_BZERO
+  explicit_bzero(h0, len);
+#else
+  volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
+  size_t i = (size_t) 0U;
+
+  while (i < len) {
+    pnt_[i++] = 0U;
+  }
+#endif
+
+  SHA1Final(h1, &ctx);
+  *scrambled_password = '*';
+  hexify(scrambled_password + 1U, h1, 42, sizeof h1);
+}
+#endif

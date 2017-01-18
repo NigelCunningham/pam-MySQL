@@ -46,6 +46,21 @@
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
+#ifndef PAM_EXTERN
+#define PAM_EXTERN
+#endif
+
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
+
+#ifndef LOG_AUTHPRIV
+#define LOG_AUTHPRIV LOG_AUTH
+#endif
+
+#ifdef LINUX_PAM_CONST_BUG
+#define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
+#endif
+
 #define PAM_MODULE_NAME "pam_mysql"
 #define PAM_MYSQL_LOG_PREFIX PAM_MODULE_NAME " - "
 
@@ -191,5 +206,6 @@ typedef struct _pam_mysql_ctx_t {
 
 typedef enum _pam_mysql_err_t pam_mysql_err_t;
 
+#include <security/_pam_types.h>
 #include "pam_mysql_string.h"
 #endif
