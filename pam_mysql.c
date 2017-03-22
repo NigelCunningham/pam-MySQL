@@ -168,7 +168,9 @@
 #define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
 #endif
 
-#ifndef my_make_scrambled_password
+#ifdef HAVE_MY_MAKE_SCRAMBLED_PASSWORD
+void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len);
+#else
 #include "crypto.h"
 #include "crypto-sha1.h"
 

@@ -25,12 +25,11 @@ documentation and/or software.
 
 #include <config.h>
 
-#if defined(WITH_LDAP) || defined(WITH_MYSQL) || defined(WITH_PGSQL) && !defined(USE_SYSTEM_CRYPT_MD5)
+#ifndef HAVE_MY_MAKE_SCRAMBLED_PASSWORD
 
-#include "ftpd.h"
+#include <string.h>
 #include "crypto.h"
 #include "crypto-md5.h"
-#include "utils.h"
 
 #ifdef WITH_DMALLOC
 # include <dmalloc.h>
@@ -187,7 +186,7 @@ void MD5Final(unsigned char digest[16], MD5_CTX * context)
 
         /* Zeroize sensitive information.
          */
-        pure_memzero(context, sizeof (*context));
+        memset(context, 0, sizeof (*context));
     }
 }
 
@@ -280,7 +279,7 @@ static void MD5Transform(crypto_uint4 state[4],
 
     /* Zeroize sensitive information.
      */
-    pure_memzero(x, sizeof x);
+    memset(x, 0, sizeof x);
 }
 
 #ifdef WORDS_BIGENDIAN
