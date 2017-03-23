@@ -13,7 +13,7 @@ LT_INIT([disable-static])
 AC_PROG_CC
 AC_PROG_INSTALL
 
-dnl Check for sizes
+dnl For PureFTP crypto.
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
