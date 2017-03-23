@@ -24,8 +24,6 @@ AC_CHECK_DECLS([ELOOP, EOVERFLOW],,,[[#include <errno.h>]])
 AC_SEARCH_LIBS([socket],[socket],,[AC_MSG_ERROR([unable to find the socket() function])])
 AC_CHECK_FUNCS([getaddrinfo])
 
-AC_CHECK_LIB(crypt, crypt, , )
-
 PAM_MYSQL_CHECK_IPV6
 PAM_MYSQL_CHECK_GETHOSTBYNAME_R
 
