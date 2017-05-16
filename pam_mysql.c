@@ -168,14 +168,14 @@
 #define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
 #endif
 
-#ifdef HAVE_MY_MAKE_SCRAMBLED_PASSWORD
-void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len);
+#ifdef HAVE_MAKE_SCRAMBLED_PASSWORD
+void make_scrambled_password(char scrambled_password[42], const char password[255], int len);
 #else
 #include "crypto.h"
 #include "crypto-sha1.h"
 
 // Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
-static void my_make_scrambled_password(char scrambled_password[42], const char password[255], int len)
+static void make_scrambled_password(char scrambled_password[42], const char password[255], int len)
 {
 	SHA1_CTX      ctx;
 	unsigned char h0[20], h1[20];
@@ -2927,10 +2927,10 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
               if (ctx->use_323_passwd) {
                 make_scrambled_password_323(buf, passwd);
               } else {
-                my_make_scrambled_password(buf, passwd, strlen(passwd));
+                make_scrambled_password(buf, passwd, strlen(passwd));
               }
 #else
-              my_make_scrambled_password(buf, passwd, strlen(passwd));
+              make_scrambled_password(buf, passwd, strlen(passwd));
 #endif
 
               vresult = strcmp(row[0], buf);
@@ -3172,10 +3172,10 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
         if (ctx->use_323_passwd) {
           make_scrambled_password_323(encrypted_passwd, new_passwd);
         } else {
-          my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+          make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
         }
 #else
-        my_make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+        make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
 #endif
         break;
 
