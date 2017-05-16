@@ -168,14 +168,12 @@
 #define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
 #endif
 
-#ifdef HAVE_MAKE_SCRAMBLED_PASSWORD
-void make_scrambled_password(char scrambled_password[42], const char password[255], int len);
-#else
+#ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 #include "crypto.h"
 #include "crypto-sha1.h"
 
 // Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
-static void make_scrambled_password(char scrambled_password[42], const char password[255], int len)
+void make_scrambled_password(char scrambled_password[42], const char password[255])
 {
 	SHA1_CTX      ctx;
 	unsigned char h0[20], h1[20];
@@ -186,12 +184,12 @@ static void make_scrambled_password(char scrambled_password[42], const char pass
 	SHA1Init(&ctx);
 	SHA1Update(&ctx, h0, sizeof h0);
 # ifdef HAVE_EXPLICIT_BZERO
-    explicit_bzero(h0, len);
+    explicit_bzero(h0, strlen(password));
 # else
     volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
     size_t                     i = (size_t) 0U;
 
-    while (i < len) {
+    while (i < strlen(password)) {
         pnt_[i++] = 0U;
     }
 # endif
@@ -2927,10 +2925,10 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
               if (ctx->use_323_passwd) {
                 make_scrambled_password_323(buf, passwd);
               } else {
-                make_scrambled_password(buf, passwd, strlen(passwd));
+                make_scrambled_password(buf, passwd);
               }
 #else
-              make_scrambled_password(buf, passwd, strlen(passwd));
+              make_scrambled_password(buf, passwd);
 #endif
 
               vresult = strcmp(row[0], buf);
@@ -3172,10 +3170,10 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
         if (ctx->use_323_passwd) {
           make_scrambled_password_323(encrypted_passwd, new_passwd);
         } else {
-          make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+          make_scrambled_password(encrypted_passwd, new_passwd);
         }
 #else
-        make_scrambled_password(encrypted_passwd, new_passwd, strlen(new_passwd));
+        make_scrambled_password(encrypted_passwd, new_passwd);
 #endif
         break;
 
