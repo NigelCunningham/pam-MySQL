@@ -1,6 +1,6 @@
 #include <config.h>
 
-#ifndef HAVE_MY_MAKE_SCRAMBLED_PASSWORD
+#ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 
 #include <stdint.h>
 #include <string.h>
@@ -37,7 +37,7 @@ char *hexify(char * const result, const unsigned char *digest,
 char *hexify(char * const result, const unsigned char *digest,
 	     const size_t size_result, size_t size_digest)
 {
-    static const char * const hexchars = "0123456789abcdef";
+    static const char * const hexchars = "0123456789ABCDEF";
     char *result_pnt = result;
 
     if (size_digest <= (size_t) 0 ||
