@@ -25,7 +25,7 @@ documentation and/or software.
 
 #include <config.h>
 
-#ifndef HAVE_MY_MAKE_SCRAMBLED_PASSWORD
+#ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 
 #include <string.h>
 #include "crypto.h"
