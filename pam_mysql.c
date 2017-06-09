@@ -656,7 +656,7 @@ static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *
 
   return md;
 }
-
+#define HAVE_PAM_MYSQL_SHA512_DATA
 static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char *md)
 {
   size_t i, j;
