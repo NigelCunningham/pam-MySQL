@@ -2,7 +2,7 @@
  * PAM module for MySQL
  *
  * Copyright (C) 1998-2005 Gunay Arslan and the contributors.
- * Copyright (C) 2015-2016 Nigel Cunningham and contributors.
+ * Copyright (C) 2015-2017 Nigel Cunningham and contributors.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or
