@@ -1,8 +1,9 @@
 #include <config.h>
 
-#if defined(WITH_LDAP) || defined(WITH_MYSQL) || defined(WITH_PGSQL)
+#ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 
-#include "ftpd.h"
+#include <stdint.h>
+#include <string.h>
 #include "crypto.h"
 #ifndef USE_SYSTEM_CRYPT_SHA1
 # include "crypto-sha1.h"
@@ -36,7 +37,7 @@ char *hexify(char * const result, const unsigned char *digest,
 char *hexify(char * const result, const unsigned char *digest,
 	     const size_t size_result, size_t size_digest)
 {
-    static const char * const hexchars = "0123456789abcdef";
+    static const char * const hexchars = "0123456789ABCDEF";
     char *result_pnt = result;
 
     if (size_digest <= (size_t) 0 ||
@@ -240,17 +241,17 @@ char *crypto_hash_ssha1(const char *string, const char *stored)
     }
     SHA1Final(digest, &ctx);
     sizeof_hash_and_salt = sizeof digest + decoded_len;
-    if ((hash_and_salt = ALLOCA(sizeof_hash_and_salt)) == NULL) {
+    if ((hash_and_salt = malloc(sizeof_hash_and_salt)) == NULL) {
         return NULL;
     }
     memcpy(hash_and_salt, digest, sizeof digest);   /* no possible overflow */
     memcpy(hash_and_salt + sizeof digest, salt, decoded_len);   /* no possible overflow */
     if (base64ify(decoded, (const unsigned char *) hash_and_salt,
                   sizeof decoded, sizeof_hash_and_salt) == NULL) {
-        ALLOCA_FREE(hash_and_salt);
+        free(hash_and_salt);
         return NULL;
     }
-    ALLOCA_FREE(hash_and_salt);
+    free(hash_and_salt);
 
     return decoded;
 }
@@ -285,17 +286,17 @@ char *crypto_hash_smd5(const char *string, const char *stored)
     }
     MD5Final(digest, &ctx);
     sizeof_hash_and_salt = sizeof digest + decoded_len;
-    if ((hash_and_salt = ALLOCA(sizeof_hash_and_salt)) == NULL) {
+    if ((hash_and_salt = malloc(sizeof_hash_and_salt)) == NULL) {
         return NULL;
     }
     memcpy(hash_and_salt, digest, sizeof digest);   /* no possible overflow */
     memcpy(hash_and_salt + sizeof digest, salt, decoded_len);   /* no possible overflow */
     if (base64ify(decoded, (const unsigned char *) hash_and_salt,
                   sizeof decoded, sizeof_hash_and_salt) == NULL) {
-        ALLOCA_FREE(hash_and_salt);
+        free(hash_and_salt);
         return NULL;
     }
-    ALLOCA_FREE(hash_and_salt);
+    free(hash_and_salt);
 
     return decoded;
 }

@@ -13,20 +13,16 @@ LT_INIT([disable-static])
 AC_PROG_CC
 AC_PROG_INSTALL
 
-dnl Check for sizes
+dnl For PureFTP crypto.
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(mode_t)
 
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h netdb.h string.h strings.h sys/socket.h sys/types.h sys/stat.h sys/param.h fcntl.h syslog.h unistd.h stdarg.h errno.h crypt.h security/pam_appl.h])
 AC_TYPE_SIZE_T
 AC_CHECK_DECLS([ELOOP, EOVERFLOW],,,[[#include <errno.h>]])
 AC_SEARCH_LIBS([socket],[socket],,[AC_MSG_ERROR([unable to find the socket() function])])
 AC_CHECK_FUNCS([getaddrinfo])
-
-AC_CHECK_LIB(crypt, crypt, , )
 
 PAM_MYSQL_CHECK_IPV6
 PAM_MYSQL_CHECK_GETHOSTBYNAME_R
@@ -114,4 +110,6 @@ AC_SEARCH_LIBS([crypt],[crypt],,[AC_MSG_ERROR([unable to find the crypt() functi
 
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile pam_mysql.spec])
+AC_SEARCH_LIBS([make_scrambled_password],[mysql],[AC_DEFINE([HAVE_MAKE_SCRAMBLED_PASSWORD], [1], [Build own SHA1 support.])])
+
 AC_OUTPUT

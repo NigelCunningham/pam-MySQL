@@ -14,12 +14,12 @@
 
 #include <config.h>
 
-#if (defined(WITH_LDAP) || defined(WITH_MYSQL) || defined(WITH_PGSQL)) && !defined(USE_SYSTEM_CRYPT_SHA1)
+#ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 
-#include "ftpd.h"
+#include <string.h>
 #include "crypto.h"
 #include "crypto-sha1.h"
-#include "utils.h"
+//#include "utils.h"
 
 #ifdef WITH_DMALLOC
 # include <dmalloc.h>
@@ -228,10 +228,10 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX * context)
         }
     }
     /* Wipe variables */
-    pure_memzero(context->buffer, 64);
-    pure_memzero(context->state, 20);
-    pure_memzero(context->count, 8);
-    pure_memzero(&finalcount, 8);
+    memset(context->buffer, 0, 64);
+    memset(context->state, 0, 20);
+    memset(context->count, 0, 8);
+    memset(&finalcount, 0, 8);
 }
 
 #else
