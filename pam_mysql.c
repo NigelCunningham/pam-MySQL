@@ -168,7 +168,17 @@
 #include "crypto.h"
 #include "crypto-sha1.h"
 
-// Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
+/**
+ * Implementation of make_scrambled_password.
+ *
+ * Taken from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp
+ * source.
+ *
+ * @param char scrambled_password
+ *   The buffer into which the password should be saved.
+ * @param char password
+ *   The password to be scrambled.
+ */
 void make_scrambled_password(char scrambled_password[42], const char password[255])
 {
     SHA1_CTX ctx;
@@ -192,8 +202,7 @@ void make_scrambled_password(char scrambled_password[42], const char password[25
 
     SHA1Final(h1, &ctx);
     *scrambled_password = '*';
-    hexify(scrambled_password + 1U, h1,
-            42, sizeof h1);
+    hexify(scrambled_password + 1U, h1, 42, sizeof h1);
 }
 #endif
 
@@ -375,7 +384,21 @@ static char *xstrdup(const char *ptr);
 static void xfree(void *ptr);
 static void xfree_overwrite(char *ptr);
 
-/* strnncpy */
+/**
+ * Local strnncpy.
+ *
+ * @param char* dest
+ *   Pointer to a string into which the string should be copied.
+ * @param size_t dest_size
+ *   The size of the destination buffer.
+ * @param char *src
+ *   Pointer to the source string.
+ * @param size_t src_len
+ *   The length of the source string.
+ *
+ * @return size_t
+ *   The length of the copied data.
+ */
 static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len)
 {
     size_t cpy_len;
@@ -389,7 +412,22 @@ static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src
     return cpy_len;
 }
 
-/* xcalloc */
+/**
+ * Allocate space for an array of elements of equal size.
+ *
+ * The product of the size and number of items must not exceed the capacity
+ * of a signed int (if I've understood the check correctly!)
+ *
+ * Memory is cleared.
+ *
+ * @param size_t nmemb
+ *   The number of array elements.
+ * @param size_t size
+ *   The size of each element.
+ *
+ * @return mixed
+ *   NULL if no allocation is made, or a cleared array of the requested size.
+ */
 static void *xcalloc(size_t nmemb, size_t size)
 {
     void *retval;
@@ -404,7 +442,20 @@ static void *xcalloc(size_t nmemb, size_t size)
     return retval;
 }
 
-/* xrealloc */
+/**
+ * Adjust the amount of space allocated for an array of elements of equal size.
+ *
+ * The product of the size and number of items must not exceed the capacity
+ * of a signed int.
+ *
+ * @param size_t nmemb
+ *   The number of array elements.
+ * @param size_t size
+ *   The size of each element.
+ *
+ * @return mixed
+ *   NULL if no allocation is made, or a cleared array of the requested size.
+ */
 static void *xrealloc(void *ptr, size_t nmemb, size_t size)
 {
     void *retval;
@@ -419,7 +470,15 @@ static void *xrealloc(void *ptr, size_t nmemb, size_t size)
     return retval;
 }
 
-/* xstrdup */
+/**
+ * Duplicate a string.
+ *
+ * @param const char *ptr
+ *   The string to be duplicated.
+ *
+ * @return mixed.
+ *   A copy of the string or NULL if memory allocation failed.
+ */
 static char *xstrdup(const char *ptr)
 {
     size_t len = strlen(ptr) + sizeof(char);
@@ -434,7 +493,12 @@ static char *xstrdup(const char *ptr)
     return retval;
 }
 
-/* xfree */
+/**
+ * Free memory allocated with malloc.
+ *
+ * @param void *ptr
+ *   A pointer to the allocation.
+ */
 static void xfree(void *ptr)
 {
     if (ptr != NULL) {
@@ -442,7 +506,12 @@ static void xfree(void *ptr)
     }
 }
 
-/* xfree_overwrite */
+/**
+ * Clear memory and free it.
+ *
+ * @param char *ptr
+ *   The memory to be cleared and freed.
+ */
 static void xfree_overwrite(char *ptr)
 {
     if (ptr != NULL) {
@@ -454,7 +523,21 @@ static void xfree_overwrite(char *ptr)
     }
 }
 
-/* memspn */
+/**
+ * Locate the first instance of a list of delimiters in an input buffer.
+ *
+ * @param void *buf
+ *   The memory
+ * @param size_t buf_len
+ *   The length of the input buffer.
+ * @param const unsigned char *delims
+ *   A pointer to an array of single character delimiters.
+ * @param size_t ndelims
+ *   The number of delimiters provided.
+ *
+ * @return unsigned char
+ *   A pointer to the first delimiter found, or the end of the input buffer.
+ */
 static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
         size_t ndelims)
 {
@@ -462,55 +545,80 @@ static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
     unsigned char *p;
 
     switch (ndelims) {
-        case 0:
-            return buf_end;
+    case 0:
+        return buf_end;
 
-        case 1: {
-                    unsigned char c = delims[0];
+    case 1:
+        {
+            unsigned char c = delims[0];
 
-                    for (p = (unsigned char *)buf; p < buf_end; p++) {
-                        if (*p != c) {
+            for (p = (unsigned char *)buf; p < buf_end; p++) {
+                if (*p != c) {
+                    return (void *)p;
+                }
+            }
+        }
+
+        break;
+
+    case 2:
+        {
+            unsigned char c1 = delims[0], c2 = delims[1];
+
+            for (p = (unsigned char *)buf; p < buf_end; p++) {
+                if (*p != c1 && *p != c2) {
+                    return (void *)p;
+                }
+            }
+        }
+
+        break;
+
+    default:
+        {
+            const unsigned char *delims_end = delims + ndelims;
+            unsigned char and_mask = ~0, or_mask = 0;
+            const unsigned char *q;
+
+            for (q = delims; q < delims_end; q++) {
+                and_mask &= *q;
+                or_mask |= *q;
+            }
+
+            for (p = (unsigned char *)buf; p < buf_end; p++) {
+                if ((*p & and_mask) == and_mask && (*p & or_mask) != 0) {
+                    for (q = delims; *p != *q; q++) {
+                        if (q >= delims_end) {
                             return (void *)p;
                         }
                     }
-                } break;
+                }
+            }
+        }
 
-        case 2: {
-                    unsigned char c1 = delims[0], c2 = delims[1];
-
-                    for (p = (unsigned char *)buf; p < buf_end; p++) {
-                        if (*p != c1 && *p != c2) {
-                            return (void *)p;
-                        }
-                    }
-                } break;
-
-        default: {
-                     const unsigned char *delims_end = delims + ndelims;
-                     unsigned char and_mask = ~0, or_mask = 0;
-                     const unsigned char *q;
-
-                     for (q = delims; q < delims_end; q++) {
-                         and_mask &= *q;
-                         or_mask |= *q;
-                     }
-
-                     for (p = (unsigned char *)buf; p < buf_end; p++) {
-                         if ((*p & and_mask) == and_mask && (*p & or_mask) != 0) {
-                             for (q = delims; *p != *q; q++) {
-                                 if (q >= delims_end) {
-                                     return (void *)p;
-                                 }
-                             }
-                         }
-                     }
-                 } break;
+        break;
     }
 
     return NULL;
 }
 
-/* memcspn */
+/**
+ * Locate a delimiter or delimiters within a string.
+ *
+ * @TODO: What's the difference from memspn above?
+ *
+ * @param void *buf
+ *   The input buffer.
+ * @param size_t buf_len
+ *   The size of the input buffer.
+ * @param const unsigned char *delims
+ *   An array of single character delimiters.
+ * @param size_t ndelims
+ *   The number of delimiters.
+ *
+ * @return mixed
+ *   The location of the first matching delimiter or NULL.
+ */
 static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
         size_t ndelims)
 {
@@ -535,7 +643,8 @@ static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
     }
 }
 
-/* pam_mysql_md5_data
+/**
+ * pam_mysql_md5_data
  *
  * AFAIK, only FreeBSD has MD5Data() defined in md5.h
  * better MD5 support will appear in 0.5
@@ -545,6 +654,19 @@ static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
 #define pam_mysql_md5_data MD5Data
 #elif defined(HAVE_OPENSSL) || (defined(HAVE_SASL_MD5_H) && defined(USE_SASL_MD5)) || (!defined(HAVE_OPENSSL) && defined(HAVE_SOLARIS_MD5))
 #if defined(USE_SASL_MD5)
+/**
+ * Get the MD5 hash of a string.
+ *
+ * @param const unsigned char *d
+ *   The string for which a MD5 sum is to be computed.
+ * @param unsigned int n
+ *   The length of the input.
+ * @param unsigned char *md
+ *   The buffer into which the MD5 sum will be placed.
+ *
+ * @return unsigned char *
+ *   The output buffer location.
+ */
 static unsigned char *MD5(const unsigned char *d, unsigned int n,
         unsigned char *md)
 {
@@ -562,6 +684,19 @@ static unsigned char *MD5(const unsigned char *d, unsigned int n,
 #define MD5(d, n, md) md5_calc(d, md, n)
 #endif
 #define HAVE_PAM_MYSQL_MD5_DATA
+/**
+ * Calculate a MD5 sum and return as a hex string.
+ *
+ * @param const unsigned char *d
+ *   The input buffer.
+ * @param unsigned int sz
+ *   The size of the input.
+ * @param char *md
+ *   A pointer to the output buffer (NULL or at least 33 bytes).
+ *
+ * @return char *
+ *   A pointer to the output buffer.
+ */
 static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *md)
 {
     size_t i, j;
@@ -585,9 +720,21 @@ static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *m
 }
 #endif
 
-/* pam_mysql_sha1_data */
 #if defined(HAVE_OPENSSL)
 #define HAVE_PAM_MYSQL_SHA1_DATA
+/**
+ * Calculate the SHA1 hash of input and return as a hex string.
+ *
+ * @param const unsigned char *d
+ *   The input buffer location.
+ * @param unsigned int sz
+ *   The size of the input.
+ * @param char *md
+ *   A pointer to the output buffer (NULL or at least 41 bytes).
+ *
+ * @return char *
+ *   A pointer to the output buffer.
+ */
 static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *md)
 {
     size_t i, j;
@@ -610,6 +757,19 @@ static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *
     return md;
 }
 
+/**
+ * Calculate the SHA512 hash of input and return as a hex string.
+ *
+ * @param const unsigned char *d
+ *   The input buffer location.
+ * @param unsigned int sz
+ *   The size of the input.
+ * @param char *md
+ *   A pointer to the output buffer (NULL or at least 129 bytes).
+ *
+ * @return char *
+ *   A pointer to the output buffer.
+ */
 static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char *md)
 {
     size_t i, j;
@@ -659,6 +819,9 @@ static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char
 
 /**
  * Returns a string for mapping an int to the corresponding base 64 character.
+ *
+ * @return char *
+ *   The string for use in mapping ints to base 64 characters.
  */
 static char * _password_itoa64(void)
 {
@@ -667,6 +830,12 @@ static char * _password_itoa64(void)
 
 /**
  * Parse the log2 iteration count from a stored hash or setting string.
+ *
+ * @param char *setting
+ *   The Drupal 7 password setting string.
+ *
+ * @return mixed
+ *   -1 if the character wasn't found or the log2 iteration count.
  */
 static int d7_password_get_count_log2(char *setting)
 {
@@ -680,7 +849,21 @@ static int d7_password_get_count_log2(char *setting)
     return -1;
 }
 
-static char * _password_base64_encode(unsigned char *input, int count, char *output) {
+/**
+ * Base64 encode a password.
+ *
+ * @param unsigned char *input
+ *   The unencoded password.
+ * @param int count
+ *   The length of the input.
+ * @param char *output
+ *   The buffer for the encoded password.
+ *
+ * @return char *
+ *   The location of the NULL terminating the output buffer.
+ */
+static char * _password_base64_encode(unsigned char *input, int count,
+                                      char *output) {
     int i = 0, off = 0;
     char *itoa64 = _password_itoa64();
     unsigned long value;
@@ -710,7 +893,25 @@ static char * _password_base64_encode(unsigned char *input, int count, char *out
     return output;
 }
 
-/* Strings may be binary and contain \0, so we can't use strlen */
+/**
+ * Calculate the Drupal 7 hash for a password.
+ *
+ * Strings may be binary and contain \0, so we can't use strlen.
+ *
+ * @param int use_md5
+ *   Whether to use MD5 (non zero) or SHA512.
+ * @param char *string1
+ *   The first string (setting string)
+ * @param int len1
+ *   The length of the first string.
+ * @param char *string2
+ *   The second string (password)
+ * @param int len2
+ *   The length of the second string.
+ *
+ * @return mixed
+ *   The D7 hash or NULL if memory could not be allocated.
+ */
 static char *d7_hash(int use_md5, char *string1, int len1, char *string2, int len2)
 {
     int len = len1 + len2;
@@ -733,7 +934,22 @@ static char *d7_hash(int use_md5, char *string1, int len1, char *string2, int le
     return output;
 }
 
-// The first 12 characters of an existing hash are its setting string.
+/**
+ * Encrypt a Drupal 7 password.
+ *
+ * The first 12 characters of an existing hash are its setting string.
+ *
+ * @param int use_md5
+ *   Whether to use MD5 or SHA512.
+ * @param char *password
+ *   The unencryped password.
+ * @param char *setting
+ *   The setting string.
+ *
+ * @return mixed
+ *   NULL if memory allocation failed or inputs were invalid, else a ponter to
+ *   the encrypted password.
+ */
 static char * d7_password_crypt(int use_md5, char *password, char *setting) {
     char salt[9], *old, *new, *final;
     int expected, count, count_log2 = d7_password_get_count_log2(setting);
