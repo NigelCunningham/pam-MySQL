@@ -12,12 +12,12 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * Original Version written by: Gunay ARSLAN <arslan@gunes.medyatext.com.tr>
  * This version by: James O'Kane <jo2y@midnightlinux.com>
@@ -46,8 +46,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
-/* {{{ includes */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,10 +138,10 @@
 #endif
 
 /*
- * here, we make definitions for the externally accessible functions
- * in this file (these definitions are required for static modules
- * but strongly encouraged generally) they are used to instruct the
- * modules include file to define their prototypes.
+ * Definitions for the externally accessible functions in this file (these
+ * definitions are required for static modules but strongly encouraged
+ * generally) they are used to instruct the modules include file to define their
+ * prototypes.
  */
 
 #define PAM_SM_AUTH
@@ -153,8 +151,6 @@
 
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
-
-/* }}} */
 
 #ifndef PAM_EXTERN
 #define PAM_EXTERN
@@ -175,7 +171,7 @@
 // Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
 void make_scrambled_password(char scrambled_password[42], const char password[255])
 {
-    SHA1_CTX      ctx;
+    SHA1_CTX ctx;
     unsigned char h0[20], h1[20];
 
     SHA1Init(&ctx);
@@ -183,16 +179,16 @@ void make_scrambled_password(char scrambled_password[42], const char password[25
     SHA1Final(h0, &ctx);
     SHA1Init(&ctx);
     SHA1Update(&ctx, h0, sizeof h0);
-# ifdef HAVE_EXPLICIT_BZERO
+#ifdef HAVE_EXPLICIT_BZERO
     explicit_bzero(h0, strlen(password));
-# else
+#else
     volatile unsigned char *pnt_ = (volatile unsigned char *) h0;
-    size_t                     i = (size_t) 0U;
+    size_t i = (size_t) 0U;
 
     while (i < strlen(password)) {
         pnt_[i++] = 0U;
     }
-# endif
+#endif
 
     SHA1Final(h1, &ctx);
     *scrambled_password = '*';
@@ -201,14 +197,13 @@ void make_scrambled_password(char scrambled_password[42], const char password[25
 }
 #endif
 
-#define PAM_MODULE_NAME  "pam_mysql"
+#define PAM_MODULE_NAME "pam_mysql"
 #define PAM_MYSQL_LOG_PREFIX PAM_MODULE_NAME " - "
 #define PLEASE_ENTER_PASSWORD "Password:"
-#define PLEASE_ENTER_OLD_PASSWORD "(Current) Password:"
-#define PLEASE_ENTER_NEW_PASSWORD "(New) Password:"
-#define PLEASE_REENTER_NEW_PASSWORD "Retype (New) Password:"
+#define PLEASE_ENTER_OLD_PASSWORD "Current Password:"
+#define PLEASE_ENTER_NEW_PASSWORD "New Password:"
+#define PLEASE_REENTER_NEW_PASSWORD "Retype New Password:"
 
-/* {{{ consts  */
 enum _pam_mysql_err_t {
     PAM_MYSQL_ERR_SUCCESS = 0,
     PAM_MYSQL_ERR_UNKNOWN = -1,
@@ -239,10 +234,7 @@ enum _pam_mysql_config_token_t {
 
 #define PAM_MYSQL_CAP_CHAUTHTOK_SELF    0x0001
 #define PAM_MYSQL_CAP_CHAUTHTOK_OTHERS    0x0002
-/* }}} */
 
-/* {{{ typedefs */
-/* {{{ typedef struct pam_mysql_ctx_t */
 typedef struct _pam_mysql_ctx_t {
     MYSQL *mysql_hdl;
     char *host;
@@ -273,73 +265,51 @@ typedef struct _pam_mysql_ctx_t {
     char *config_file;
     char *my_host_info;
 } pam_mysql_ctx_t; /*Max length for most MySQL fields is 16 */
-/* }}} */
 
-/* {{{ typedef enum pam_mysql_err_t */
 typedef enum _pam_mysql_err_t pam_mysql_err_t;
-/* }}} */
 
-/* {{{ typedef enum pam_mysql_config_token_t */
 typedef enum _pam_mysql_config_token_t pam_mysql_config_token_t;
-/* }}} */
 
-/* {{{ typedef (func) pam_mysql_option_getter_t */
 typedef int(*pam_mysql_option_getter_t)(void *val, const char **pretval, int *to_release);
-/* }}} */
 
-/* {{{ typedef (func) pam_mysql_option_setter_t */
 typedef int(*pam_mysql_option_setter_t)(void *val, const char *newval_str);
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_option_accessor_t */
 typedef struct _pam_mysql_option_accessor_t {
     pam_mysql_option_getter_t get_op;
     pam_mysql_option_setter_t set_op;
 } pam_mysql_option_accessor_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_option_t */
 typedef struct _pam_mysql_option_t {
     const char *name;
     size_t name_len;
     size_t offset;
     pam_mysql_option_accessor_t *accessor;
 } pam_mysql_option_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_str_t */
 typedef struct _pam_mysql_str_t {
     char *p;
     size_t len;
     size_t alloc_size;
     int mangle;
 } pam_mysql_str_t;
-/* }}} */
 
-/* {{{ typedef (func) pam_mysql_handle_entry_fn_t */
 struct _pam_mysql_entry_handler_t;
 
 typedef pam_mysql_err_t (*pam_mysql_handle_entry_fn_t)(
         struct _pam_mysql_entry_handler_t *, int, const char *, size_t,
         const char *, size_t);
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_entry_handler_t */
 typedef struct _pam_mysql_entry_handler_t {
     pam_mysql_ctx_t *ctx;
     pam_mysql_handle_entry_fn_t handle_entry_fn;
     pam_mysql_option_t *options;
 } pam_mysql_entry_handler_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_config_parser_t */
 typedef struct _pam_mysql_config_parser_t {
     pam_mysql_ctx_t *ctx;
     pam_mysql_entry_handler_t *hdlr;
 } pam_mysql_config_parser_t;
-/* }}} */
 
-/* {{{ typedef struct pam_mysql_stream_t */
 typedef struct _pam_mysql_stream_t {
     int fd;
     unsigned char buf[2][2048];
@@ -350,9 +320,7 @@ typedef struct _pam_mysql_stream_t {
     size_t buf_in_use;
     int eof;
 } pam_mysql_stream_t;
-/* }}} */
 
-/* {{{ typedef struct _pam_mysql_config_scanner_t */
 typedef struct _pam_mysql_config_scanner_t {
     pam_mysql_ctx_t *ctx;
     pam_mysql_str_t image;
@@ -360,11 +328,9 @@ typedef struct _pam_mysql_config_scanner_t {
     pam_mysql_stream_t *stream;
     int state;
 } pam_mysql_config_scanner_t;
-/* }}} */
-/* }}} */
 
-/* {{{ prototypes */
-/* {{{ General PAM Prototypes */
+/* prototypes */
+/* General PAM Prototypes */
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
         int flags, int argc, const char **argv);
 PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc,
@@ -377,12 +343,11 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
         const char **argv);
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
         const char **argv);
-/* }}} */
 
-/* {{{ static prototypes */
+/* static prototypes */
 static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int status);
 
-/* {{{ pam_mysql methods */
+/* pam_mysql methods */
 static pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh);
 
 static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *);
@@ -403,17 +368,14 @@ static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *, const char *msg,
         const char *user, const char *host);
 static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *,
         const char **pretval);
-/* }}} */
 
 static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len);
 static void *xcalloc(size_t nmemb, size_t size);
 static char *xstrdup(const char *ptr);
 static void xfree(void *ptr);
 static void xfree_overwrite(char *ptr);
-/* }}} */
-/* }}} */
 
-/* {{{ strnncpy */
+/* strnncpy */
 static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len)
 {
     size_t cpy_len;
@@ -426,9 +388,8 @@ static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src
 
     return cpy_len;
 }
-/* }}} */
 
-/* {{{ xcalloc */
+/* xcalloc */
 static void *xcalloc(size_t nmemb, size_t size)
 {
     void *retval;
@@ -442,9 +403,8 @@ static void *xcalloc(size_t nmemb, size_t size)
 
     return retval;
 }
-/* }}} */
 
-/* {{{ xrealloc */
+/* xrealloc */
 static void *xrealloc(void *ptr, size_t nmemb, size_t size)
 {
     void *retval;
@@ -458,9 +418,8 @@ static void *xrealloc(void *ptr, size_t nmemb, size_t size)
 
     return retval;
 }
-/* }}} */
 
-/* {{{ xstrdup */
+/* xstrdup */
 static char *xstrdup(const char *ptr)
 {
     size_t len = strlen(ptr) + sizeof(char);
@@ -474,18 +433,16 @@ static char *xstrdup(const char *ptr)
 
     return retval;
 }
-/* }}} */
 
-/* {{{ xfree */
+/* xfree */
 static void xfree(void *ptr)
 {
     if (ptr != NULL) {
         free(ptr);
     }
 }
-/* }}} */
 
-/* {{{ xfree_overwrite */
+/* xfree_overwrite */
 static void xfree_overwrite(char *ptr)
 {
     if (ptr != NULL) {
@@ -496,9 +453,8 @@ static void xfree_overwrite(char *ptr)
         free(ptr);
     }
 }
-/* }}} */
 
-/* {{{ memspn */
+/* memspn */
 static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
         size_t ndelims)
 {
@@ -553,9 +509,8 @@ static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
 
     return NULL;
 }
-/* }}} */
 
-/* {{{ memcspn */
+/* memcspn */
 static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
         size_t ndelims)
 {
@@ -579,9 +534,8 @@ static void *memcspn(void *buf, size_t buf_len, const unsigned char *delims,
         return NULL;
     }
 }
-/* }}} */
 
-/* {{{ pam_mysql_md5_data
+/* pam_mysql_md5_data
  *
  * AFAIK, only FreeBSD has MD5Data() defined in md5.h
  * better MD5 support will appear in 0.5
@@ -630,9 +584,8 @@ static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *m
     return md;
 }
 #endif
-/* }}} */
 
-/* {{{ pam_mysql_sha1_data */
+/* pam_mysql_sha1_data */
 #if defined(HAVE_OPENSSL)
 #define HAVE_PAM_MYSQL_SHA1_DATA
 static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *md)
@@ -679,7 +632,6 @@ static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char
     return md;
 }
 #endif
-/* }}} */
 
 #if defined(HAVE_PAM_MYSQL_SHA1_DATA) && defined(HAVE_PAM_MYSQL_MD5_DATA)
 #define HAVE_PAM_MYSQL_DRUPAL7
@@ -874,10 +826,9 @@ static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, c
     return md;
 }
 #endif
-/* }}} */
 
-/* {{{ option handlers */
-/* {{{ pam_mysql_string_opt_getter */
+/* option handlers */
+/* pam_mysql_string_opt_getter */
 static pam_mysql_err_t pam_mysql_string_opt_getter(void *val, const char **pretval, int *to_release)
 {
     *pretval = *(char **)val;
@@ -885,9 +836,8 @@ static pam_mysql_err_t pam_mysql_string_opt_getter(void *val, const char **pretv
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_string_opt_setter */
+/* pam_mysql_string_opt_setter */
 static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval_str)
 {
     if (*(char **)val != NULL) {
@@ -901,9 +851,8 @@ static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_boolean_opt_getter
+/* pam_mysql_boolean_opt_getter
 */
 static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pretval, int *to_release)
 {
@@ -912,9 +861,8 @@ static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pret
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_boolean_opt_setter */
+/* pam_mysql_boolean_opt_setter */
 static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newval_str)
 {
     *(int *)val = (strcmp(newval_str, "0") != 0 &&
@@ -924,9 +872,8 @@ static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newva
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_crypt_opt_getter */
+/* pam_mysql_crypt_opt_getter */
 static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretval, int *to_release)
 {
     switch (*(int *)val) {
@@ -966,9 +913,8 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_crypt_opt_setter */
+/* pam_mysql_crypt_opt_setter */
 static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_str)
 {
     if (strcmp(newval_str, "0") == 0 || strcasecmp(newval_str, "plain") == 0) {
@@ -1008,10 +954,8 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
     return PAM_MYSQL_ERR_INVAL;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ option definitions */
+/* option definitions */
 #define PAM_MYSQL_OFFSETOF(type, x) ((size_t)&((type *)0)->x)
 
 #define PAM_MYSQL_DEF_OPTION(name, accr) PAM_MYSQL_DEF_OPTION2(name, name, accr)
@@ -1065,10 +1009,9 @@ static pam_mysql_option_t options[] = {
     PAM_MYSQL_DEF_OPTION2(debug, verbose, &pam_mysql_boolean_opt_accr),
     { NULL, 0, 0, NULL }
 };
-/* }}} */
 
-/* {{{ string functions */
-/* {{{ pam_mysql_str_init() */
+/* string functions */
+/* pam_mysql_str_init() */
 static pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle)
 {
     str->p = "";
@@ -1078,9 +1021,8 @@ static pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle)
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_destroy() */
+/* pam_mysql_str_destroy() */
 static void pam_mysql_str_destroy(pam_mysql_str_t *str)
 {
     if (str->alloc_size > 0) {
@@ -1090,9 +1032,8 @@ static void pam_mysql_str_destroy(pam_mysql_str_t *str)
         xfree(str->p);
     }
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_reserve() */
+/* pam_mysql_str_reserve() */
 static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
 {
     size_t len_req;
@@ -1151,9 +1092,8 @@ static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_append() */
+/* pam_mysql_str_append() */
 static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str,
         const char *s, size_t len)
 {
@@ -1169,16 +1109,14 @@ static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str,
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_append_char() */
+/* pam_mysql_str_append_char() */
 static pam_mysql_err_t pam_mysql_str_append_char(pam_mysql_str_t *str, char c)
 {
     return pam_mysql_str_append(str, &c, sizeof(c));
 }
-/* }}} */
 
-/* {{{ pam_mysql_str_truncate() */
+/* pam_mysql_str_truncate() */
 static pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len)
 {
     if (len > str->len) {
@@ -1193,11 +1131,9 @@ static pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len)
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ stream functions */
-/* {{{ pam_mysql_stream_open */
+/* stream functions */
+/* pam_mysql_stream_open */
 static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
         pam_mysql_ctx_t *ctx, const char *file)
 {
@@ -1257,18 +1193,16 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_close */
+/* pam_mysql_stream_close */
 static void pam_mysql_stream_close(pam_mysql_stream_t *stream)
 {
     if (stream->fd != -1) {
         close(stream->fd);
     }
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_getc */
+/* pam_mysql_stream_getc */
 static pam_mysql_err_t pam_mysql_stream_getc(pam_mysql_stream_t *stream,
         int *retval)
 {
@@ -1305,9 +1239,8 @@ static pam_mysql_err_t pam_mysql_stream_getc(pam_mysql_stream_t *stream,
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_ungetc */
+/* pam_mysql_stream_ungetc */
 static pam_mysql_err_t pam_mysql_stream_ungetc(pam_mysql_stream_t *stream, int c)
 {
     if (stream->buf_ptr == stream->buf_start) {
@@ -1325,9 +1258,8 @@ static pam_mysql_err_t pam_mysql_stream_ungetc(pam_mysql_stream_t *stream, int c
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_skip_spn */
+/* pam_mysql_stream_skip_spn */
 static pam_mysql_err_t pam_mysql_stream_skip_spn(pam_mysql_stream_t *stream,
         const char *accept_cset, size_t naccepts)
 {
@@ -1385,9 +1317,8 @@ static pam_mysql_err_t pam_mysql_stream_skip_spn(pam_mysql_stream_t *stream,
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_stream_read_cspn */
+/* pam_mysql_stream_read_cspn */
 static pam_mysql_err_t pam_mysql_stream_read_cspn(pam_mysql_stream_t *stream,
         pam_mysql_str_t *append_to, int *found_delim, const char *delims,
         size_t ndelims)
@@ -1492,10 +1423,8 @@ static pam_mysql_err_t pam_mysql_stream_read_cspn(pam_mysql_stream_t *stream,
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ config file scanner / parser */
+/* config file scanner / parser */
 static const char * pam_mysql_config_token_name[] = {
     "=",
     "<NEWLINE>",
@@ -1505,7 +1434,7 @@ static const char * pam_mysql_config_token_name[] = {
     NULL
 };
 
-/* {{{ pam_mysql_config_scanner_init */
+/* pam_mysql_config_scanner_init */
 static pam_mysql_err_t pam_mysql_config_scanner_init(
         pam_mysql_config_scanner_t *scanner, pam_mysql_ctx_t *ctx,
         pam_mysql_stream_t *stream)
@@ -1522,17 +1451,15 @@ static pam_mysql_err_t pam_mysql_config_scanner_init(
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_scanner_destroy */
+/* pam_mysql_config_scanner_destroy */
 static void pam_mysql_config_scanner_destroy(
         pam_mysql_config_scanner_t *scanner)
 {
     pam_mysql_str_destroy(&scanner->image);
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_scanner_next_token */
+/* pam_mysql_config_scanner_next_token */
 static pam_mysql_err_t pam_mysql_config_scanner_next_token(
         pam_mysql_config_scanner_t *scanner)
 {
@@ -1708,9 +1635,8 @@ static pam_mysql_err_t pam_mysql_config_scanner_next_token(
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_parser_init */
+/* pam_mysql_config_parser_init */
 static pam_mysql_err_t pam_mysql_config_parser_init(
         pam_mysql_config_parser_t *parser, pam_mysql_ctx_t *ctx,
         pam_mysql_entry_handler_t *hdlr)
@@ -1720,16 +1646,14 @@ static pam_mysql_err_t pam_mysql_config_parser_init(
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_parser_destroy */
+/* pam_mysql_config_parser_destroy */
 static void pam_mysql_config_parser_destroy(pam_mysql_config_parser_t *parser)
 {
     /* do nothing */
 }
-/* }}} */
 
-/* {{{ pam_mysql_config_parser_parse */
+/* pam_mysql_config_parser_parse */
 static pam_mysql_err_t pam_mysql_config_parser_parse(
         pam_mysql_config_parser_t *parser, pam_mysql_stream_t *stream)
 {
@@ -1909,10 +1833,8 @@ out:
 
     return err;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ pam_mysql_find_option()
+/* pam_mysql_find_option()
 */
 pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
         const char *name, size_t name_len)
@@ -1929,9 +1851,8 @@ pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
 
     return NULL;
 }
-/* }}} */
 
-/* {{{ entry handler */
+/* entry handler */
 static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     PAM_MYSQL_DEF_OPTION2(users.host, host, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.database, db, &pam_mysql_string_opt_accr),
@@ -1959,7 +1880,7 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     { NULL, 0, 0, NULL }
 };
 
-/* {{{ pam_mysql_handle_entry */
+/* pam_mysql_handle_entry */
 static pam_mysql_err_t pam_mysql_handle_entry(
         pam_mysql_entry_handler_t *hdlr, int line_num, const char *name,
         size_t name_len, const char *value, size_t value_len)
@@ -1987,9 +1908,8 @@ static pam_mysql_err_t pam_mysql_handle_entry(
 
     return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_entry_handler_init */
+/* pam_mysql_entry_handler_init */
 static pam_mysql_err_t pam_mysql_entry_handler_init(
         pam_mysql_entry_handler_t *hdlr, pam_mysql_ctx_t *ctx)
 {
@@ -1999,18 +1919,15 @@ static pam_mysql_err_t pam_mysql_entry_handler_init(
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_entry_handler_destroy */
+/* pam_mysql_entry_handler_destroy */
 static void pam_mysql_entry_handler_destroy(
         pam_mysql_entry_handler_t *hdlr)
 {
     /* do nothing */
 }
-/* }}} */
-/* }}} */
 
-// {{{ pam_mysql_get_host_info
+// pam_mysql_get_host_info
 static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
         const char **pretval)
 {
@@ -2205,7 +2122,7 @@ static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* {{{ pam_mysql_init_ctx()
+/* pam_mysql_init_ctx()
 */
 static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
 {
@@ -2240,9 +2157,8 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_destroy_ctx() */
+/* pam_mysql_destroy_ctx() */
 static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
 {
     if (ctx->verbose) {
@@ -2308,9 +2224,8 @@ static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
     xfree(ctx->my_host_info);
     ctx->my_host_info = NULL;
 }
-/* }}} */
 
-/* {{{ pam_mysql_release_ctx() */
+/* pam_mysql_release_ctx() */
 static void pam_mysql_release_ctx(pam_mysql_ctx_t *ctx)
 {
     if (ctx->verbose) {
@@ -2322,16 +2237,14 @@ static void pam_mysql_release_ctx(pam_mysql_ctx_t *ctx)
         xfree(ctx);
     }
 }
-/* }}} */
 
-/* {{{ pam_mysql_cleanup_hdlr() */
+/* pam_mysql_cleanup_hdlr() */
 static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int status)
 {
     pam_mysql_release_ctx((pam_mysql_ctx_t*)voiddata);
 }
-/* }}} */
 
-/* {{{ pam_mysql_retrieve_ctx()
+/* pam_mysql_retrieve_ctx()
 */
 pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh)
 {
@@ -2376,9 +2289,8 @@ pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_set_option()
+/* pam_mysql_set_option()
 */
 pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, size_t name_len, const char *val)
 {
@@ -2396,9 +2308,8 @@ pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, siz
 
     return opt->accessor->set_op((void *)((char *)ctx + opt->offset), val);
 }
-/* }}} */
 
-/* {{{ pam_mysql_get_option()
+/* pam_mysql_get_option()
 */
 pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval, int *to_release, const char *name, size_t name_len)
 {
@@ -2416,16 +2327,15 @@ pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval,
 
     return opt->accessor->get_op((void *)((char *)ctx + opt->offset), pretval, to_release);
 }
-/* }}} */
 
-/* {{{ pam_mysql_parse_args()
+/* pam_mysql_parse_args()
 */
 pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char **argv)
 {
     pam_mysql_err_t err;
     int param_changed = 0;
     char *value = NULL;
-    int  i;
+    int i;
 
     /* process all the arguments */
     for (i = 0; i < argc; i++) {
@@ -2463,9 +2373,8 @@ pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char 
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_read_config_file() */
+/* pam_mysql_read_config_file() */
 static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
         const char *path)
 {
@@ -2498,9 +2407,8 @@ static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
 
     return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_open_db()
+/* pam_mysql_open_db()
 */
 static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *ctx)
 {
@@ -2590,9 +2498,8 @@ out:
 
     return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_close_db()
+/* pam_mysql_close_db()
 */
 static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
 {
@@ -2611,9 +2518,8 @@ static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
     xfree(ctx->mysql_hdl);
     ctx->mysql_hdl = NULL;
 }
-/* }}} */
 
-/* {{{ pam_mysql_quick_escape()
+/* pam_mysql_quick_escape()
 */
 static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_str_t *append_to, const char *val, size_t val_len)
 {
@@ -2637,9 +2543,8 @@ static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_st
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_mysql_format_string() */
+/* pam_mysql_format_string() */
 static pam_mysql_err_t pam_mysql_format_string(pam_mysql_ctx_t *ctx,
         pam_mysql_str_t *pretval, const char *template, int mangle, ...)
 {
@@ -2821,9 +2726,8 @@ out:
 
     return err;
 }
-/* }}} */
 
-/* {{{ pam_mysql_check_passwd
+/* pam_mysql_check_passwd
 */
 static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
         const char *user, const char *passwd, int null_inhibited)
@@ -3054,9 +2958,8 @@ out:
 
         return err;
     }
-    /* }}} */
 
-/* {{{ pam_mysql_saltify()
+/* pam_mysql_saltify()
  * Create a random salt for use with CRYPT() when changing passwords */
 static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salter)
 {
@@ -3110,9 +3013,8 @@ static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salt
         syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_saltify() returning salt = %s.", salt);
     }
 }
-/* }}} */
 
-/* {{{ pam_mysql_update_passwd
+/* pam_mysql_update_passwd
  * Update the password in MySQL
  * To reduce the number of calls to the DB, I'm now assuming that the old
  * password has been verified elsewhere, so I only check for null/not null
@@ -3299,9 +3201,8 @@ out:
 
         return err;
     }
-    /* }}} */
 
-/* {{{ pam_mysql_query_user_stat */
+/* pam_mysql_query_user_stat */
 static pam_mysql_err_t pam_mysql_query_user_stat(pam_mysql_ctx_t *ctx,
         int *pretval, const char *user)
 {
@@ -3393,9 +3294,8 @@ out:
 
         return err;
     }
-    /* }}} */
 
-/* {{{ pam_mysql_sql_log()
+/* pam_mysql_sql_log()
 */
 static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *ctx, const char *msg, const char *user, const char *rhost)
 {
@@ -3492,9 +3392,8 @@ out:
 
         return err;
     }
-    /* }}} */
 
-/* {{{ pam_mysql_converse()
+/* pam_mysql_converse()
 */
 static pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
         pam_handle_t *pamh, size_t nargs, ...)
@@ -3619,10 +3518,8 @@ out:
 
     return err;
 }
-/* }}} */
-/* }}} */
 
-/* {{{ pam_mysql_query_user_caps */
+/* pam_mysql_query_user_caps */
 static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *ctx,
         int *pretval, const char *user)
 {
@@ -3638,10 +3535,9 @@ static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *ctx,
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
-/* }}} */
 
 /* {{{ PAM Authentication services */
-/* {{{ pam_sm_authenticate
+/* pam_sm_authenticate
 */
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         int argc, const char **argv)
@@ -3887,9 +3783,8 @@ out:
 
     return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_acct_mgmt
+/* pam_sm_acct_mgmt
 */
 PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags, int argc,
         const char **argv)
@@ -4030,9 +3925,8 @@ out:
 
     return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_setcred
+/* pam_sm_setcred
 */
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
         const char **argv)
@@ -4042,9 +3936,8 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
 #endif
     return PAM_SUCCESS;
 }
-/* }}} */
 
-/* {{{ pam_sm_chauthtok
+/* pam_sm_chauthtok
 */
 PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
         const char **argv)
@@ -4423,9 +4316,8 @@ out:
 
     return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_open_session
+/* pam_sm_open_session
 */
 PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
         const char **argv)
@@ -4526,9 +4418,8 @@ out:
 
     return retval;
 }
-/* }}} */
 
-/* {{{ pam_sm_close_session
+/* pam_sm_close_session
 */
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
         const char **argv)
@@ -4629,8 +4520,6 @@ out:
 
     return retval;
 }
-/* }}} */
-/* }}} */
 
 /* end of module definition */
 
@@ -4649,4 +4538,4 @@ struct pam_module _pam_mysql_modstruct = {
 };
 
 #endif
-/* vim: set expandtab sw=4 tw=100 ts=4 textwidth=100 : */
+/* vim: set expandtab sw=4 ts=4 textwidth=80 : */
