@@ -8,5 +8,6 @@ pam_mysql_la_CPPFLAGS = $(openssl_CFLAGS)
 pam_mysql_la_LIBADD   = $(openssl_LIBS) -lpam
 
 EXTRA_DIST = INSTALL.pam-mysql
+ACLOCAL_AMFLAGS = -I m4
 
 AM_DISTCHECK_CONFIGURE_FLAGS = --with-pam-mods-dir=\$${prefix}/lib/security

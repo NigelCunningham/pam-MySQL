@@ -133,6 +133,10 @@
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
+#include <assert.h>
 #endif
 
 #ifdef HAVE_MYSQL_H
@@ -632,9 +636,107 @@ static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *m
 #endif
 /* }}} */
 
-/* {{{ pam_mysql_sha1_data */
 #if defined(HAVE_OPENSSL)
 #define HAVE_PAM_MYSQL_SHA1_DATA
+/**
+ * Implementation of calcDecodeLength
+ *
+ * Calculates the length of a decoded string
+ * Copyright (c) 2013 Barry Steyn
+ * https://gist.github.com/barrysteyn/7308212
+ *
+ * @param char* b64input
+ *   The buffer of the encoded string.
+ *
+ * @return size_t
+ *   The length of the decoded string
+ */
+static size_t calcDecodeLength(const char* b64input) {
+	size_t len = strlen(b64input),
+		padding = 0;
+
+	if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
+		padding = 2;
+	else if (b64input[len-1] == '=') //last char is =
+		padding = 1;
+
+	return (len*3)/4 - padding;
+}
+
+/**
+ * Implementation of Base64Encode
+ *
+ * Encodes a binary safe base 64 string
+ * Copyright (c) 2013 Barry Steyn
+ * https://gist.github.com/barrysteyn/7308212
+ *
+ * @param unsigned char* buffer
+ *   The buffer of the "normal" string as input.
+ * @param size_t length
+ *   The length of the "normal" string.
+ * @param char** b64text
+ *   The buffer of the encoded string.
+ *
+ * @return int
+ *   0 = success
+ */
+int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) {
+	BIO *bio, *b64;
+	BUF_MEM *bufferPtr;
+
+	b64 = BIO_new(BIO_f_base64());
+	bio = BIO_new(BIO_s_mem());
+	bio = BIO_push(b64, bio);
+
+	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Ignore newlines - write everything in one line
+	BIO_write(bio, buffer, length);
+	BIO_flush(bio);
+	BIO_get_mem_ptr(bio, &bufferPtr);
+	BIO_set_close(bio, BIO_NOCLOSE);
+	BIO_free_all(bio);
+
+	*b64text=(*bufferPtr).data;
+
+	return (0); //success
+}
+
+/**
+ * Implementation of Base64Decode
+ *
+ * Decodes a base64 encoded string
+ * Copyright (c) 2013 Barry Steyn
+ * https://gist.github.com/barrysteyn/7308212
+ *
+ * @param unsigned char* b64message
+ *   The buffer of the Base64 encoded string as input.
+ * @param char** buffer
+ *   The buffer of the decoded string.
+ * @param size_t length
+ *   The length of the decoded string.
+ *
+ * @return int
+ *   0 = success
+ */
+static int Base64Decode(char* b64message, unsigned char** buffer, size_t* length) {
+	BIO *bio, *b64;
+
+	int decodeLen = calcDecodeLength(b64message);
+	*buffer = (unsigned char*)malloc(decodeLen + 1);
+	(*buffer)[decodeLen] = '\0';
+
+	bio = BIO_new_mem_buf(b64message, -1);
+	b64 = BIO_new(BIO_f_base64());
+	bio = BIO_push(b64, bio);
+
+	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
+	*length = BIO_read(bio, *buffer, strlen(b64message));
+	assert(*length == decodeLen); //length should equal decodeLen, else something went horribly wrong
+	BIO_free_all(bio);
+
+	return (0); //success
+}
+
+/* {{{ pam_mysql_sha1_data */
 static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *md)
 {
   size_t i, j;
@@ -873,8 +975,52 @@ static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, c
 
   return md;
 }
-#endif
 /* }}} */
+
+/**
+ * Calculate the salted SHA hash and return as a base64 string.
+ *
+ * @param const unsigned char *d
+ *   The input buffer.
+ * @param unsigned int sz
+ *   The size of the input.
+ * @param char *salt
+ *   A pointer to the salt string.
+ * @param size_t salt_length
+ *   The size of the salt string.
+ * @param char *md
+ *   A pointer to the output buffer (NULL or at least 33 bytes).
+ *
+ * @return char *
+ *   A pointer to the output buffer.
+ */
+static char *pam_mysql_ssha_data(const unsigned char *d, size_t sz, char *salt, size_t salt_length, char *md)
+{
+	if (md == NULL) {
+		if ((md = xcalloc(40 + 1, sizeof(char))) == NULL) {
+			return NULL;
+		}
+	}
+
+	unsigned char sha_hash_data[sz + salt_length];
+	memcpy(sha_hash_data, d, sz);
+	memcpy(&(sha_hash_data[sz]), salt, salt_length);
+
+	unsigned char buf[20];
+	SHA1(sha_hash_data, sz + salt_length, buf);
+
+	unsigned char b64_hash_data[20 + salt_length];
+	memcpy(b64_hash_data, buf, 20);
+	memcpy(&(b64_hash_data[20]), salt, salt_length);
+
+	char* base64EncodeOutput;
+	Base64Encode(b64_hash_data, 20 + salt_length, &base64EncodeOutput);
+
+	memcpy(md, base64EncodeOutput, strlen(base64EncodeOutput) + 1);
+
+	return md;
+}
+#endif
 
 /* {{{ option handlers */
 /* {{{ pam_mysql_string_opt_getter */
@@ -958,6 +1104,10 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
       *pretval = "joomla15";
       break;
 
+    case 7:
+      *pretval = "ssha";
+      break;
+
     default:
       *pretval = NULL;
   }
@@ -1001,6 +1151,11 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
   if (strcmp(newval_str, "6") == 0 || strcasecmp(newval_str, "joomla15") == 0) {
     *(int *)val = 6;
+    return PAM_MYSQL_ERR_SUCCESS;
+  }
+
+  if (strcmp(newval_str, "7") == 0 || strcasecmp(newval_str, "ssha") == 0) {
+    *(int *)val = 7;
     return PAM_MYSQL_ERR_SUCCESS;
   }
 
@@ -3020,6 +3175,30 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
               xfree(tmp);
 #else
               syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash is not supported in this build.");
+#endif
+            } break;
+
+          case 7:
+            {
+              /* Salted SHA */
+#ifdef HAVE_PAM_MYSQL_SHA1_DATA
+              unsigned char* hash;
+              size_t sha1_size;
+              Base64Decode(row[0], &hash, &sha1_size);
+              size_t salt_length = sha1_size - 20;
+              unsigned char salt[salt_length];
+              memcpy(salt, &(hash[20]), salt_length);
+
+              char buf[41];
+              pam_mysql_ssha_data((unsigned char*)passwd, strlen(passwd), salt, salt_length,
+                  buf);
+              vresult = strcmp(row[0], buf);
+              {
+                char *p = buf - 1;
+                while (*(++p)) *p = '\0';
+              }
+#else
+              syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SSHA hash is not supported in this build.");
 #endif
             } break;
 
