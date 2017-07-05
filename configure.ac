@@ -1,3 +1,4 @@
+m4_pattern_allow([AC_DEFINE])
 AC_PREREQ([2.58])
 AC_INIT(pam-mysql, 0.8)
 AC_CONFIG_MACRO_DIR([m4])
