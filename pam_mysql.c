@@ -638,8 +638,20 @@ static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *m
 
 #if defined(HAVE_OPENSSL)
 #define HAVE_PAM_MYSQL_SHA1_DATA
-/* {{{ calcDecodeLength */
-static size_t calcDecodeLength(const char* b64input) { //Calculates the length of a decoded string
+/**
+ * Implementation of calcDecodeLength
+ *
+ * Calculates the length of a decoded string
+ * Copyright (c) 2013 Barry Steyn
+ * https://gist.github.com/barrysteyn/7308212
+ *
+ * @param char* b64input
+ *   The buffer of the encoded string.
+ *
+ * @return size_t
+ *   The length of the decoded string
+ */
+static size_t calcDecodeLength(const char* b64input) {
 	size_t len = strlen(b64input),
 		padding = 0;
 
@@ -650,10 +662,25 @@ static size_t calcDecodeLength(const char* b64input) { //Calculates the length o
 
 	return (len*3)/4 - padding;
 }
-/* }}} */
 
-/* {{{ Base64Encode */
-int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) { //Encodes a binary safe base 64 string
+/**
+ * Implementation of Base64Encode
+ *
+ * Encodes a binary safe base 64 string
+ * Copyright (c) 2013 Barry Steyn
+ * https://gist.github.com/barrysteyn/7308212
+ *
+ * @param unsigned char* buffer
+ *   The buffer of the "normal" string as input.
+ * @param size_t length
+ *   The length of the "normal" string.
+ * @param char** b64text
+ *   The buffer of the encoded string.
+ *
+ * @return int
+ *   0 = success
+ */
+int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) {
 	BIO *bio, *b64;
 	BUF_MEM *bufferPtr;
 
@@ -672,10 +699,25 @@ int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) { /
 
 	return (0); //success
 }
-/* }}} */
 
-/* {{{ Base64Decode */
-static int Base64Decode(char* b64message, unsigned char** buffer, size_t* length) { //Decodes a base64 encoded string
+/**
+ * Implementation of Base64Decode
+ *
+ * Decodes a base64 encoded string
+ * Copyright (c) 2013 Barry Steyn
+ * https://gist.github.com/barrysteyn/7308212
+ *
+ * @param unsigned char* b64message
+ *   The buffer of the Base64 encoded string as input.
+ * @param char** buffer
+ *   The buffer of the decoded string.
+ * @param size_t length
+ *   The length of the decoded string.
+ *
+ * @return int
+ *   0 = success
+ */
+static int Base64Decode(char* b64message, unsigned char** buffer, size_t* length) {
 	BIO *bio, *b64;
 
 	int decodeLen = calcDecodeLength(b64message);
@@ -693,7 +735,6 @@ static int Base64Decode(char* b64message, unsigned char** buffer, size_t* length
 
 	return (0); //success
 }
-/* }}} */
 
 /* {{{ pam_mysql_sha1_data */
 static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *md)
@@ -936,7 +977,23 @@ static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, c
 }
 /* }}} */
 
-/* {{{ pam_mysql_ssha_data */
+/**
+ * Calculate the salted SHA hash and return as a base64 string.
+ *
+ * @param const unsigned char *d
+ *   The input buffer.
+ * @param unsigned int sz
+ *   The size of the input.
+ * @param char *salt
+ *   A pointer to the salt string.
+ * @param size_t salt_length
+ *   The size of the salt string.
+ * @param char *md
+ *   A pointer to the output buffer (NULL or at least 33 bytes).
+ *
+ * @return char *
+ *   A pointer to the output buffer.
+ */
 static char *pam_mysql_ssha_data(const unsigned char *d, size_t sz, char *salt, size_t salt_length, char *md)
 {
 	if (md == NULL) {
@@ -963,7 +1020,6 @@ static char *pam_mysql_ssha_data(const unsigned char *d, size_t sz, char *salt, 
 
 	return md;
 }
-/* }}} */
 #endif
 
 /* {{{ option handlers */
