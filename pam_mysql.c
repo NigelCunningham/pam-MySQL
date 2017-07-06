@@ -1002,6 +1002,22 @@ static char * d7_password_crypt(int use_md5, char *password, char *setting) {
     return final;
 }
 
+/**
+ * Encrypt a provided password, using the same method applied to the password in
+ * the database.
+ *
+ * @param const unsigned char *pwd
+ *   The unencrypted password.
+ * @param unsigned int sz
+ *   The size of the password.
+ * @param char *md
+ *   The hashed, crypted password.
+ * @param char *db_pwd
+ *   The password stored in the DB.
+ *
+ * @return char *
+ *   The encrypted password.
+ */
 static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, char *md, char *db_pwd)
 {
     char *stored_hash = db_pwd, *pwd_ptr = (char *) pwd, *hashed;
@@ -1043,8 +1059,21 @@ static char *pam_mysql_drupal7_data(const unsigned char *pwd, unsigned int sz, c
 }
 #endif
 
-/* option handlers */
-/* pam_mysql_string_opt_getter */
+/* Option handlers */
+
+/**
+ * Getter for a string option.
+ *
+ * @param void *val
+ *   The pointer to be set to the address of the option.
+ * @param const char **pretval.
+ *   Pointer to the start of the requested string.
+ * @param int *to_release.
+ *   Pointer to a flag indicating whether the caller should free val.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of whether the operation succeeded.
+ */
 static pam_mysql_err_t pam_mysql_string_opt_getter(void *val, const char **pretval, int *to_release)
 {
     *pretval = *(char **)val;
@@ -1053,7 +1082,17 @@ static pam_mysql_err_t pam_mysql_string_opt_getter(void *val, const char **pretv
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_string_opt_setter */
+/**
+ * Setter for a string option.
+ *
+ * @param void *val
+ *   A pointer to the string. Any existing value will be freed.
+ * @param const char *newval_str
+ *   Pointer to the new string value.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of whether the operation succeeded.
+ */
 static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval_str)
 {
     if (*(char **)val != NULL) {
@@ -1068,8 +1107,19 @@ static pam_mysql_err_t pam_mysql_string_opt_setter(void *val, const char *newval
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_boolean_opt_getter
-*/
+/**
+ * Getter for a boolean option.
+ *
+ * @param void *val
+ *   The pointer to be set to the address of the option.
+ * @param const char **pretval.
+ *   Pointer to the start of the requested option.
+ * @param int *to_release.
+ *   Pointer to a flag indicating whether the caller should free val.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of whether the operation succeeded.
+ */
 static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pretval, int *to_release)
 {
     *pretval = (*(int *)val ? "true": "false");
@@ -1078,7 +1128,17 @@ static pam_mysql_err_t pam_mysql_boolean_opt_getter(void *val, const char **pret
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_boolean_opt_setter */
+/**
+ * Setter for a boolean option.
+ *
+ * @param void *val
+ *   A pointer to the boolean.
+ * @param const char *newval_str
+ *   Pointer to the new value.
+ *
+ * @return int
+ *   Indication of whether the operation succeeded.
+ */
 static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newval_str)
 {
     *(int *)val = (strcmp(newval_str, "0") != 0 &&
@@ -1089,7 +1149,19 @@ static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newva
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_crypt_opt_getter */
+/**
+ * Get the name matching a numeric key for a crypt method.
+ *
+ * @param void *val
+ *   The index of the method.
+ * @param const char **pretval
+ *   A pointer that should be set to the address of the matching string.
+ * @param int *
+ *   Pointer to an integer indicating whether the caller should free val.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretval, int *to_release)
 {
     switch (*(int *)val) {
@@ -1131,6 +1203,17 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
 }
 
 /* pam_mysql_crypt_opt_setter */
+/**
+ * Get the number matching a crypt method name.
+ *
+ * @param void *val
+ *   Pointer to the integer value to be returned.
+ * @param const char *newval_str
+ *   Pointer to a string to be matched against method names.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_str)
 {
     if (strcmp(newval_str, "0") == 0 || strcasecmp(newval_str, "plain") == 0) {
@@ -1227,7 +1310,18 @@ static pam_mysql_option_t options[] = {
 };
 
 /* string functions */
-/* pam_mysql_str_init() */
+
+/**
+ * String initialisor.
+ *
+ * @param pam_mysql_str_t *str
+ *   Pointer to the string to be initialised.
+ * @param int mangle
+ *   Value for the mangle attribute.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle)
 {
     str->p = "";
@@ -1238,7 +1332,12 @@ static pam_mysql_err_t pam_mysql_str_init(pam_mysql_str_t *str, int mangle)
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_str_destroy() */
+/**
+ * String destructor. Clears memory if mangle is set.
+ *
+ * @param pam_mysql_str_t *str
+ *   Pointer to the string to be freed.
+ */
 static void pam_mysql_str_destroy(pam_mysql_str_t *str)
 {
     if (str->alloc_size > 0) {
@@ -1249,7 +1348,17 @@ static void pam_mysql_str_destroy(pam_mysql_str_t *str)
     }
 }
 
-/* pam_mysql_str_reserve() */
+/**
+ * Modify a string structure to allow for a longer string.
+ *
+ * @param pam_mysql_str_t *str
+ *   Pointer to the structure.
+ * @param size_t len
+ *   The amount of additional space required.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
 {
     size_t len_req;
@@ -1309,7 +1418,19 @@ static pam_mysql_err_t pam_mysql_str_reserve(pam_mysql_str_t *str, size_t len)
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_str_append() */
+/**
+ * Append new content to an existing string.
+ *
+ * @param pam_mysql_str_t *str
+ *   Pointer to the structure.
+ * @param const char *s
+ *   The string to be appended.
+ * @param size_t len
+ *   The length of the new string.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str,
         const char *s, size_t len)
 {
@@ -1326,13 +1447,33 @@ static pam_mysql_err_t pam_mysql_str_append(pam_mysql_str_t *str,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_str_append_char() */
+/**
+ * Append a single character to a string.
+ *
+ * @param pam_mysql_str_t *str
+ *   Pointer to the structure.
+ * @param char c
+ *   The character to be appended.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_str_append_char(pam_mysql_str_t *str, char c)
 {
     return pam_mysql_str_append(str, &c, sizeof(c));
 }
 
-/* pam_mysql_str_truncate() */
+/**
+ * Truncate a string.
+ *
+ * @param pam_mysql_str_t *str
+ *   Pointer to the structure.
+ * @param size_t len
+ *   The new string length.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len)
 {
     if (len > str->len) {
@@ -1348,8 +1489,21 @@ static pam_mysql_err_t pam_mysql_str_truncate(pam_mysql_str_t *str, size_t len)
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* stream functions */
-/* pam_mysql_stream_open */
+/* Stream functions */
+
+/**
+ * Open a stream.
+ *
+ * @param pam_mysql_stream_t *stream
+ *   Pointer to the stream structure.
+ * @param pam_mysql_ctx_t *ctx
+ *   Pointer to the context data structure.
+ * @param const char *file
+ *   Pointer to the file name.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
         pam_mysql_ctx_t *ctx, const char *file)
 {
@@ -1410,7 +1564,12 @@ static pam_mysql_err_t pam_mysql_stream_open(pam_mysql_stream_t *stream,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_stream_close */
+/**
+ * Close a stream.
+ *
+ * @param pam_mysql_stream_t *stream
+ *   Pointer to the stream data structure.
+ */
 static void pam_mysql_stream_close(pam_mysql_stream_t *stream)
 {
     if (stream->fd != -1) {
@@ -1418,7 +1577,17 @@ static void pam_mysql_stream_close(pam_mysql_stream_t *stream)
     }
 }
 
-/* pam_mysql_stream_getc */
+/**
+ * Get a single character from a stream.
+ *
+ * @param pam_mysql_stream_t *stream
+ *   Pointer to the stream data structure.
+ * @param int *retval
+ *   Pointer to the int where the index should be stored.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_stream_getc(pam_mysql_stream_t *stream,
         int *retval)
 {
@@ -1456,7 +1625,17 @@ static pam_mysql_err_t pam_mysql_stream_getc(pam_mysql_stream_t *stream,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_stream_ungetc */
+/**
+ * Put back a character to the stream.
+ *
+ * @param pam_mysql_stream_t *stream
+ *   Pointer to the stream structure.
+ * @param int c
+ *   The character to 'return' to the stream.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_stream_ungetc(pam_mysql_stream_t *stream, int c)
 {
     if (stream->buf_ptr == stream->buf_start) {
