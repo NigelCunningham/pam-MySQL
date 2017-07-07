@@ -860,6 +860,43 @@ static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *
 }
 
 /**
+ * Calculate the SHA256 hash of input and return as a hex string.
+ *
+ * @param const unsigned char *d
+ *   The input buffer location.
+ * @param unsigned int sz
+ *   The size of the input.
+ * @param char *md
+ *   A pointer to the output buffer (NULL or at least 65 bytes).
+ *
+ * @return char *
+ *   A pointer to the output buffer.
+ */
+static char *pam_mysql_sha256_data(const unsigned char *d, unsigned int sz, char *md)
+{
+    size_t i, j;
+    unsigned char buf[32];
+
+    if (md == NULL) {
+        if ((md = xcalloc(64 + 1, sizeof(char))) == NULL) {
+            return NULL;
+        }
+    }
+
+    SHA256(d, (unsigned long)sz, buf);
+
+    for (i = 0, j = 0; i < 32; i++, j += 2) {
+        md[j + 0] = "0123456789abcdef"[(int)(buf[i] >> 4)];
+        md[j + 1] = "0123456789abcdef"[(int)(buf[i] & 0x0f)];
+    }
+    md[j] = '\0';
+
+    return md;
+}
+
+#define HAVE_PAM_MYSQL_SHA256_DATA
+
+/**
  * Calculate the SHA512 hash of input and return as a hex string.
  *
  * @param const unsigned char *d
@@ -1349,6 +1386,10 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
             *pretval = "sha512";
             break;
 
+        case 9:
+            *pretval = "sha256";
+            break;
+
         default:
             *pretval = NULL;
     }
@@ -1412,6 +1453,11 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
     if (strcmp(newval_str, "8") == 0 || strcasecmp(newval_str, "sha512") == 0) {
         *(int *)val = 8;
+        return PAM_MYSQL_ERR_SUCCESS;
+    }
+
+    if (strcmp(newval_str, "9") == 0 || strcasecmp(newval_str, "sha256") == 0) {
+        *(int *)val = 9;
         return PAM_MYSQL_ERR_SUCCESS;
     }
 
@@ -3798,6 +3844,23 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                                 syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
 #endif
                             }
+                            break;
+
+                    case 9:
+                            {
+#ifdef HAVE_PAM_MYSQL_SHA256_DATA
+                                char buf[64];
+                                pam_mysql_sha256_data((unsigned char*)passwd, strlen(passwd), buf);
+                                vresult = strcmp(row[0], buf);
+                                {
+                                    char *p = buf - 1;
+                                    while (*(++p)) *p = '\0';
+                                }
+#else
+                                syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA256 hash is not supported in this build.");
+#endif
+                            }
+                            break;
 
                     default: {
                              }
@@ -4052,18 +4115,34 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
             case 8:
                     {
 #ifdef HAVE_PAM_MYSQL_SHA512_DATA
-            if (NULL == (encrypted_passwd = xcalloc(128 + 1, sizeof(char)))) {
-                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                err = PAM_MYSQL_ERR_ALLOC;
-                goto out;
-            }
-            pam_mysql_sha512_data((unsigned char*)new_passwd, strlen(new_passwd), encrypted_passwd);
+                        if (NULL == (encrypted_passwd = xcalloc(128 + 1, sizeof(char)))) {
+                            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                            err = PAM_MYSQL_ERR_ALLOC;
+                            goto out;
+                        }
+                        pam_mysql_sha512_data((unsigned char*)new_passwd, strlen(new_passwd), encrypted_passwd);
 #else
-            syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
-            err = PAM_MYSQL_ERR_NOTIMPL;
-            goto out;
+                        syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
+                        err = PAM_MYSQL_ERR_NOTIMPL;
+                        goto out;
 #endif
-            break;
+                        break;
+                    }
+            case 9:
+                    {
+#ifdef HAVE_PAM_MYSQL_SHA256_DATA
+                        if (NULL == (encrypted_passwd = xcalloc(64 + 1, sizeof(char)))) {
+                            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                            err = PAM_MYSQL_ERR_ALLOC;
+                            goto out;
+                        }
+                        pam_mysql_sha256_data((unsigned char*)new_passwd, strlen(new_passwd), encrypted_passwd);
+#else
+                        syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA256 hash is not supported in this build.");
+                        err = PAM_MYSQL_ERR_NOTIMPL;
+                        goto out;
+#endif
+                        break;
                     }
             default:
                     encrypted_passwd = NULL;
