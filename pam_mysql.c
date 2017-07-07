@@ -894,6 +894,8 @@ static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char
     return md;
 }
 
+#define HAVE_PAM_MYSQL_SHA512_DATA
+
 /**
  * Calculate the salted SHA hash and return as a base64 string.
  *
@@ -1343,6 +1345,10 @@ static pam_mysql_err_t pam_mysql_crypt_opt_getter(void *val, const char **pretva
             *pretval = "ssha";
             break;
 
+        case 8:
+            *pretval = "sha512";
+            break;
+
         default:
             *pretval = NULL;
     }
@@ -1401,6 +1407,11 @@ static pam_mysql_err_t pam_mysql_crypt_opt_setter(void *val, const char *newval_
 
     if (strcmp(newval_str, "7") == 0 || strcasecmp(newval_str, "ssha") == 0) {
         *(int *)val = 7;
+        return PAM_MYSQL_ERR_SUCCESS;
+    }
+
+    if (strcmp(newval_str, "8") == 0 || strcasecmp(newval_str, "sha512") == 0) {
+        *(int *)val = 8;
         return PAM_MYSQL_ERR_SUCCESS;
     }
 
@@ -3712,7 +3723,6 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 #endif
                             } break;
 
-                            /* joomla 1.5 like passwd*/
                     case 6:
                             {
                                 /* Joomla 1.5 like password */
@@ -3773,6 +3783,21 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                                 syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SSHA hash is not supported in this build.");
 #endif
                             } break;
+
+                    case 8:
+                            {
+#ifdef HAVE_PAM_MYSQL_SHA512_DATA
+                                char buf[128];
+                                pam_mysql_sha512_data((unsigned char*)passwd, strlen(passwd), buf);
+                                vresult = strcmp(row[0], buf);
+                                {
+                                    char *p = buf - 1;
+                                    while (*(++p)) *p = '\0';
+                                }
+#else
+                                syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
+#endif
+                            }
 
                     default: {
                              }
@@ -4023,6 +4048,22 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
                         goto out;
 #endif
                         break;
+                    }
+            case 8:
+                    {
+#ifdef HAVE_PAM_MYSQL_SHA512_DATA
+            if (NULL == (encrypted_passwd = xcalloc(128 + 1, sizeof(char)))) {
+                syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
+                err = PAM_MYSQL_ERR_ALLOC;
+                goto out;
+            }
+            pam_mysql_sha512_data((unsigned char*)new_passwd, strlen(new_passwd), encrypted_passwd);
+#else
+            syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
+            err = PAM_MYSQL_ERR_NOTIMPL;
+            goto out;
+#endif
+            break;
                     }
             default:
                     encrypted_passwd = NULL;
