@@ -524,7 +524,7 @@ static void xfree_overwrite(char *ptr)
 }
 
 /**
- * Locate the first instance of a list of delimiters in an input buffer.
+ * Skip instances of a list of delimiters in an input buffer.
  *
  * @param void *buf
  *   The memory
@@ -605,7 +605,7 @@ static void *memspn(void *buf, size_t buf_len, const unsigned char *delims,
 /**
  * Locate a delimiter or delimiters within a string.
  *
- * @TODO: What's the difference from memspn above?
+ * Scan for the earliest instance of a list of delimiters.
  *
  * @param void *buf
  *   The input buffer.
@@ -1655,6 +1655,19 @@ static pam_mysql_err_t pam_mysql_stream_ungetc(pam_mysql_stream_t *stream, int c
 }
 
 /* pam_mysql_stream_skip_spn */
+/**
+ * Skip instances of a list of characters in the input stream.
+ *
+ * @param pam_mysql_stream_t *stream
+ *   A pointer to the stream data structure.
+ * @param const char *accept_cset
+ *   A pointer to the set of characters to be skipped.
+ * @param size_t naccepts
+ *   The length of the list of characters to skip.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_stream_skip_spn(pam_mysql_stream_t *stream,
         const char *accept_cset, size_t naccepts)
 {
@@ -1713,7 +1726,24 @@ static pam_mysql_err_t pam_mysql_stream_skip_spn(pam_mysql_stream_t *stream,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_stream_read_cspn */
+/**
+ * Read a stream until a character in the list of delimiters is found, and
+ * append the substr to an existing string.
+ *
+ * @param pam_mysql_stream_t *stream
+ *   A pointer to the stream data structure.
+ * @param pam_mysql_str_t *append_to
+ *   A pointer to the string to which data should be appended.
+ * @param int *found_delim
+ *   A pointer to the delimiter that was found.
+ * @param const char *delims
+ *   A pointer to the list of delimiters to match.
+ * @param size_t ndelims
+ *   The number of items in the delims list.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_stream_read_cspn(pam_mysql_stream_t *stream,
         pam_mysql_str_t *append_to, int *found_delim, const char *delims,
         size_t ndelims)
@@ -1829,7 +1859,19 @@ static const char * pam_mysql_config_token_name[] = {
     NULL
 };
 
-/* pam_mysql_config_scanner_init */
+/**
+ * Initialise the scanner data structure.
+ *
+ * @param pam_mysql_config_scanner_t *scanner
+ *   A pointer to the scanner data structure.
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param pam_mysql_stream_t *stream
+ *   A pointer to the stream data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_config_scanner_init(
         pam_mysql_config_scanner_t *scanner, pam_mysql_ctx_t *ctx,
         pam_mysql_stream_t *stream)
@@ -1847,14 +1889,27 @@ static pam_mysql_err_t pam_mysql_config_scanner_init(
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_config_scanner_destroy */
+/**
+ * Destroy a scanner data structure.
+ *
+ * @param pam_mysql_config_scanner_t *scanner
+ *   A pointer to the scanner data structure.
+ */
 static void pam_mysql_config_scanner_destroy(
         pam_mysql_config_scanner_t *scanner)
 {
     pam_mysql_str_destroy(&scanner->image);
 }
 
-/* pam_mysql_config_scanner_next_token */
+/**
+ * Get the next token in a stream.
+ *
+ * @param pam_mysql_config_scanner_t *scanner
+ *   A pointer to the scanner data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_config_scanner_next_token(
         pam_mysql_config_scanner_t *scanner)
 {
@@ -2031,7 +2086,19 @@ static pam_mysql_err_t pam_mysql_config_scanner_next_token(
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_config_parser_init */
+/**
+ * Initialise the config parser data structure.
+ *
+ * pam_mysql_config_parser_t *parser
+ *   A pointer to the parser data structure.
+ * pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * pam_mysql_entry_handler_t *hdlr
+ *   A pointer to the handler data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_config_parser_init(
         pam_mysql_config_parser_t *parser, pam_mysql_ctx_t *ctx,
         pam_mysql_entry_handler_t *hdlr)
@@ -2042,13 +2109,28 @@ static pam_mysql_err_t pam_mysql_config_parser_init(
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_config_parser_destroy */
+/**
+ * Destroy the config parser data structure.
+ *
+ * @param pam_mysql_config_parser_t *parser
+ *   A pointer to the parser data structure.
+ */
 static void pam_mysql_config_parser_destroy(pam_mysql_config_parser_t *parser)
 {
-    /* do nothing */
+    // Do nothing as it's a stack variable in the caller.
 }
 
-/* pam_mysql_config_parser_parse */
+/**
+ * Parse a configuration file.
+ *
+ * @param pam_mysql_config_parser_t *parser
+ *   A pointer to the parser data structure.
+ * @param pam_mysql_stream_t *stream
+ *   A pointer to the stream data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_config_parser_parse(
         pam_mysql_config_parser_t *parser, pam_mysql_stream_t *stream)
 {
@@ -2229,8 +2311,19 @@ out:
     return err;
 }
 
-/* pam_mysql_find_option()
-*/
+/**
+ * Find an option with the specified name.
+ *
+ * @param pam_mysql_option_t *options
+ *   The list of defined options.
+ * @param const char *name
+ *   A pointer to the string being sought.
+ * @param size_t name_len
+ *   The length of the string being matched.
+ *
+ * @return mixed
+ *   A pointer to the option data structure or NULL if no match is found.
+ */
 pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
         const char *name, size_t name_len)
 {
@@ -2275,7 +2368,25 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     { NULL, 0, 0, NULL }
 };
 
-/* pam_mysql_handle_entry */
+/**
+ * Handle one option in the configuration file.
+ *
+ * @param pam_mysql_entry_handler_t *hdlr
+ *   A pointer to the handler data structure.
+ * @param int line_num
+ *   The current line number in the configuration file.
+ * @param const char *name
+ *   The name of the option being sought.
+ * @param size_t name_len
+ *   The length of the name string.
+ * @param const char *value
+ *   A pointer to the value being given for the option.
+ * @param size_t value_len
+ *   The length of the value string.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_handle_entry(
         pam_mysql_entry_handler_t *hdlr, int line_num, const char *name,
         size_t name_len, const char *value, size_t value_len)
@@ -2304,7 +2415,17 @@ static pam_mysql_err_t pam_mysql_handle_entry(
     return err;
 }
 
-/* pam_mysql_entry_handler_init */
+/**
+ * Initialise the handler data structure.
+ *
+ * @param pam_mysql_entry_handler_t *hdlr
+ *   A pointer to the handler data structure.
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_entry_handler_init(
         pam_mysql_entry_handler_t *hdlr, pam_mysql_ctx_t *ctx)
 {
@@ -2315,14 +2436,29 @@ static pam_mysql_err_t pam_mysql_entry_handler_init(
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_entry_handler_destroy */
+/**
+ * Destroy the handler data structure.
+ *
+ * @param pam_mysql_entry_handler_t *hdlr
+ *   A pointer to the handler data structure.
+ */
 static void pam_mysql_entry_handler_destroy(
         pam_mysql_entry_handler_t *hdlr)
 {
-    /* do nothing */
+    // Do nothing - stack variable.
 }
 
-// pam_mysql_get_host_info
+/**
+ * Convert a host name to an IP address.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param const char **pretval
+ *   A pointer to the address of a string.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
         const char **pretval)
 {
@@ -2517,8 +2653,15 @@ static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *ctx,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_init_ctx()
-*/
+/**
+ * Initialise the context data structure.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
 {
     ctx->mysql_hdl = NULL;
@@ -2553,7 +2696,12 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_destroy_ctx() */
+/**
+ * Destroy the context data structure.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ */
 static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
 {
     if (ctx->verbose) {
@@ -2620,7 +2768,12 @@ static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
     ctx->my_host_info = NULL;
 }
 
-/* pam_mysql_release_ctx() */
+/**
+ * Free a context data structure.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to a context data structure.
+ */
 static void pam_mysql_release_ctx(pam_mysql_ctx_t *ctx)
 {
     if (ctx->verbose) {
@@ -2633,14 +2786,32 @@ static void pam_mysql_release_ctx(pam_mysql_ctx_t *ctx)
     }
 }
 
-/* pam_mysql_cleanup_hdlr() */
+/**
+ * Cleanup everything.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the pam_handle_t data structure.
+ * @param void *voiddata
+ *   A pointer to our context data structure.
+ * @param int status
+ *   The unused status value from PAM.
+ */
 static void pam_mysql_cleanup_hdlr(pam_handle_t *pamh, void * voiddata, int status)
 {
     pam_mysql_release_ctx((pam_mysql_ctx_t*)voiddata);
 }
 
-/* pam_mysql_retrieve_ctx()
-*/
+/**
+ * Retrieve context information from PAM.
+ *
+ * @param pam_mysql_ctx_t **pretval
+ *   A pointer to a data provided by PAM.
+ * @param pam_handle_t *pamh
+ *   A pointer to the pam data structure handle.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *pamh)
 {
     pam_mysql_err_t err;
@@ -2685,8 +2856,21 @@ pam_mysql_err_t pam_mysql_retrieve_ctx(pam_mysql_ctx_t **pretval, pam_handle_t *
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_set_option()
-*/
+/**
+ * Set an option.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param const char *name
+ *   A pointer to the name of the option being set.
+ * @param size_t name_len
+ *   The length of the name being set.
+ * @param const char *val
+ *   A pointer to the new value of the option.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, size_t name_len, const char *val)
 {
     pam_mysql_option_t *opt = pam_mysql_find_option(options, name, name_len);
@@ -2704,8 +2888,23 @@ pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *name, siz
     return opt->accessor->set_op((void *)((char *)ctx + opt->offset), val);
 }
 
-/* pam_mysql_get_option()
-*/
+/**
+ * Get an option.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param const char **pretval
+ *   A pointer to the string (will be updated to point to the value)
+ * @param int *to_release
+ *   A pointer to an int controlling whether the caller releases *pretval.
+ * @param const char *name
+ *   A pointer to the name of the option being set.
+ * @param size_t name_len
+ *   The length of the name being set.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval, int *to_release, const char *name, size_t name_len)
 {
     pam_mysql_option_t *opt = pam_mysql_find_option(options, name, name_len);
@@ -2723,8 +2922,19 @@ pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval,
     return opt->accessor->get_op((void *)((char *)ctx + opt->offset), pretval, to_release);
 }
 
-/* pam_mysql_parse_args()
-*/
+/**
+ * Parse arguments.
+ * 
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param int argc
+ *   The number of arguments.
+ * @param const char **argv
+ *   A pointer to the string containing arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char **argv)
 {
     pam_mysql_err_t err;
@@ -2769,7 +2979,17 @@ pam_mysql_err_t pam_mysql_parse_args(pam_mysql_ctx_t *ctx, int argc, const char 
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_read_config_file() */
+/**
+ * Read a configuration file.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to a context data structure.
+ * @param const char *path
+ *   The path to the configuration file.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
         const char *path)
 {
@@ -2803,8 +3023,15 @@ static pam_mysql_err_t pam_mysql_read_config_file(pam_mysql_ctx_t *ctx,
     return err;
 }
 
-/* pam_mysql_open_db()
-*/
+/**
+ * Attempt to open a connection to the database server.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *ctx)
 {
     pam_mysql_err_t err;
@@ -2894,8 +3121,12 @@ out:
     return err;
 }
 
-/* pam_mysql_close_db()
-*/
+/**
+ * Close a connection to the database.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ */
 static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
 {
     if (ctx->verbose) {
@@ -2914,8 +3145,21 @@ static void pam_mysql_close_db(pam_mysql_ctx_t *ctx)
     ctx->mysql_hdl = NULL;
 }
 
-/* pam_mysql_quick_escape()
-*/
+/**
+ * Escape a string and append it to another.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param pam_mysql_str_t *append_to
+ *   The string to which the escaped text should be appended.
+ * @param const char *val
+ *   The string to be escaped and appended.
+ * @param size_t val_len
+ *   The length of the string to be escaped and appended.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_str_t *append_to, const char *val, size_t val_len)
 {
     size_t len;
@@ -2939,7 +3183,23 @@ static pam_mysql_err_t pam_mysql_quick_escape(pam_mysql_ctx_t *ctx, pam_mysql_st
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* pam_mysql_format_string() */
+/**
+ * Format a string.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param pam_mysql_str_t *pretval
+ *   A pointer to the output string.
+ * @param const char *template
+ *   The template to which arguments should be applied.
+ * @param int mangle
+ *   Unused parameter - va_start just wants to know where args start.
+ * @param mixed
+ *   Additional parameters used to replace % macros in the template.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_format_string(pam_mysql_ctx_t *ctx,
         pam_mysql_str_t *pretval, const char *template, int mangle, ...)
 {
@@ -3122,8 +3382,21 @@ out:
     return err;
 }
 
-/* pam_mysql_check_passwd
-*/
+/**
+ * Check a password.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @ param const char *user
+ *   A pointer to the user name string.
+ * @param const char *password
+ *   A pointer to the unencrypted password string.
+ * @param int null_inhibited
+ *   Whether null authentication tokens should be disallowed.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
         const char *user, const char *passwd, int null_inhibited)
 {
@@ -3354,8 +3627,17 @@ out:
         return err;
     }
 
-/* pam_mysql_saltify()
- * Create a random salt for use with CRYPT() when changing passwords */
+/**
+ * Create a random salt for use with CRYPT() when changing passwords.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param char *salt
+ *   A pointer to the string to be filled.
+ * @param const char *salter
+ *   A pointer to the string used to generate the salt. (NB: Pointless if
+ *   HAVE_GETTIMEOFDAY is defined).
+ */
 static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salter)
 {
     unsigned int i = 0;
@@ -3409,11 +3691,23 @@ static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salt
     }
 }
 
-/* pam_mysql_update_passwd
- * Update the password in MySQL
+/**
+ * Update the password in MySQL.
+ *
  * To reduce the number of calls to the DB, I'm now assuming that the old
  * password has been verified elsewhere, so I only check for null/not null
- * and is_root. */
+ * and is_root.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param const char *user
+ *   A pointer to the string containing the username.
+ * @param const char *new_passwd
+ *   A pointer to the string containing the new password.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char *user, const char *new_passwd)
 {
     pam_mysql_err_t err = PAM_MYSQL_ERR_SUCCESS;
@@ -3597,7 +3891,19 @@ out:
         return err;
     }
 
-/* pam_mysql_query_user_stat */
+/**
+ * Detemine whether a username is known.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param int pretval
+ *   A pointer to the result.
+ * @param const char *user
+ *   A pointer to the username string to be checked.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_query_user_stat(pam_mysql_ctx_t *ctx,
         int *pretval, const char *user)
 {
@@ -3690,8 +3996,21 @@ out:
         return err;
     }
 
-/* pam_mysql_sql_log()
-*/
+/**
+ * Log a message.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param const char *msg
+ *   A pointer to the message to be logged.
+ * @param const char *user
+ *   A pointer to the string containing the relevant user name.
+ * @param const char *rhost
+ *   A pointer to a string containing the name of the remote host.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_sql_log(pam_mysql_ctx_t *ctx, const char *msg, const char *user, const char *rhost)
 {
     pam_mysql_err_t err;
@@ -3788,8 +4107,23 @@ out:
         return err;
     }
 
-/* pam_mysql_converse()
-*/
+/**
+ * Have a conversation with an application via PAM.
+ *
+ * (This is not the PAM conversation callback).
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param char **pretval
+ *   The address of a pointer to the return value.
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param size_t nargs
+ *   The number of messages to be sent.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
         pam_handle_t *pamh, size_t nargs, ...)
 {
@@ -3914,7 +4248,19 @@ out:
     return err;
 }
 
-/* pam_mysql_query_user_caps */
+/**
+ * Query the capabilities of a user.
+ *
+ * @param pam_mysql_ctx_t *ctx
+ *   A pointer to the context data structure.
+ * @param int *pretval
+ *   A pointer to the integer where the result should be stored.
+ * @param const char *user
+ *   A pointer to the username (unused).
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *ctx,
         int *pretval, const char *user)
 {
@@ -3931,9 +4277,23 @@ static pam_mysql_err_t pam_mysql_query_user_caps(pam_mysql_ctx_t *ctx,
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
-/* {{{ PAM Authentication services */
-/* pam_sm_authenticate
-*/
+/* PAM Authentication services */
+
+/**
+ * Authenticate a user.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param int flags
+ *   Flags indicating desired behaviour.
+ * @param int argc
+ *   The number of arguments provided.
+ * @param const char **argv
+ *   An array of arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         int argc, const char **argv)
 {
@@ -4179,8 +4539,21 @@ out:
     return retval;
 }
 
-/* pam_sm_acct_mgmt
-*/
+/**
+ * Get the status of a user account.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param int flags
+ *   An integer indicating desired behaviour.
+ * @param int argc
+ *   The number of arguments provided.
+ * @param const char **argv
+ *   An array of arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags, int argc,
         const char **argv)
 {
@@ -4321,8 +4694,21 @@ out:
     return retval;
 }
 
-/* pam_sm_setcred
-*/
+/**
+ * Set a user's credentials.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param int flags
+ *   An integer indicating desired behaviour.
+ * @param int argc
+ *   The number of arguments provided.
+ * @param const char **argv
+ *   An array of arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
         const char **argv)
 {
@@ -4332,8 +4718,21 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,int flags,int argc,
     return PAM_SUCCESS;
 }
 
-/* pam_sm_chauthtok
-*/
+/**
+ * Check a user's credentials, possibly force a password change.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param int flags
+ *   An integer indicating desired behaviour.
+ * @param int argc
+ *   The number of arguments provided.
+ * @param const char **argv
+ *   An array of arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
         const char **argv)
 {
@@ -4712,8 +5111,21 @@ out:
     return retval;
 }
 
-/* pam_sm_open_session
-*/
+/**
+ * Open a database connection.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param int flags
+ *   An integer indicating desired behaviour.
+ * @param int argc
+ *   The number of arguments provided.
+ * @param const char **argv
+ *   An array of arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
         const char **argv)
 {
@@ -4814,8 +5226,23 @@ out:
     return retval;
 }
 
-/* pam_sm_close_session
-*/
+/**
+ * Close a session.
+ *
+ * The content seems rather pointless to me, but I'll confirm that later.
+ *
+ * @param pam_handle_t *pamh
+ *   A pointer to the PAM handle.
+ * @param int flags
+ *   An integer indicating desired behaviour.
+ * @param int argc
+ *   The number of arguments provided.
+ * @param const char **argv
+ *   An array of arguments.
+ *
+ * @return pam_mysql_err_t
+ *   Indication of success or failure.
+ */
 PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
         const char **argv)
 {
