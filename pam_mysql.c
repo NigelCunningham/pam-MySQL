@@ -38,134 +38,10 @@
 
 #define _GNU_SOURCE
 
-#define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-#define PAM_SM_SESSION
-#define PAM_SM_PASSWORD
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef HAVE_SYSLOG_H
-#include <syslog.h>
-#endif
-
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#endif
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-
-#include <time.h>
-
-#ifdef HAVE_ERRNO_H
-#include <errno.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
-
-#ifndef HAVE_OPENSSL
-#ifdef HAVE_MD5_H
-#include <md5.h>
-#endif
-
-#if defined(HAVE_SASL_MD5_H) && (defined(HAVE_CYRUS_SASL_V1) || defined(HAVE_CYRUS_SASL_V2))
-#define USE_SASL_MD5
-#include <md5global.h>
-#include <md5.h>
-#endif
-#endif
-
-#ifdef HAVE_OPENSSL
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/buffer.h>
-#include <assert.h>
-#endif
+#include <pam_mysql.h>
 
 #ifdef HAVE_MYSQL_H
 #include <mysql.h>
-#endif
-
-/*
- * Definitions for the externally accessible functions in this file (these
- * definitions are required for static modules but strongly encouraged
- * generally) they are used to instruct the modules include file to define their
- * prototypes.
- */
-
-#define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-#define PAM_SM_SESSION
-#define PAM_SM_PASSWORD
-
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-
-#ifndef PAM_EXTERN
-#define PAM_EXTERN
-#endif
-
-#ifndef LOG_AUTHPRIV
-#define LOG_AUTHPRIV LOG_AUTH
-#endif
-
-#ifdef LINUX_PAM_CONST_BUG
-#define PAM_AUTHTOK_RECOVERY_ERR PAM_AUTHTOK_RECOVER_ERR
 #endif
 
 #ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
@@ -209,28 +85,6 @@ void make_scrambled_password(char scrambled_password[42], const char password[25
     hexify(scrambled_password + 1U, h1, 42, sizeof h1);
 }
 #endif
-
-#define PAM_MODULE_NAME "pam_mysql"
-#define PAM_MYSQL_LOG_PREFIX PAM_MODULE_NAME " - "
-#define PLEASE_ENTER_PASSWORD "Password:"
-#define PLEASE_ENTER_OLD_PASSWORD "Current Password:"
-#define PLEASE_ENTER_NEW_PASSWORD "New Password:"
-#define PLEASE_REENTER_NEW_PASSWORD "Retype New Password:"
-
-enum _pam_mysql_err_t {
-    PAM_MYSQL_ERR_SUCCESS = 0,
-    PAM_MYSQL_ERR_UNKNOWN = -1,
-    PAM_MYSQL_ERR_NO_ENTRY = 1,
-    PAM_MYSQL_ERR_ALLOC = 2,
-    PAM_MYSQL_ERR_INVAL = 3,
-    PAM_MYSQL_ERR_BUSY = 4,
-    PAM_MYSQL_ERR_DB = 5,
-    PAM_MYSQL_ERR_MISMATCH = 6,
-    PAM_MYSQL_ERR_IO = 7,
-    PAM_MYSQL_ERR_SYNTAX = 8,
-    PAM_MYSQL_ERR_EOF = 9,
-    PAM_MYSQL_ERR_NOTIMPL = 10
-};
 
 enum _pam_mysql_config_token_t {
     PAM_MYSQL_CONFIG_TOKEN_EQUAL = 0,
@@ -278,8 +132,6 @@ typedef struct _pam_mysql_ctx_t {
     char *config_file;
     char *my_host_info;
 } pam_mysql_ctx_t; /*Max length for most MySQL fields is 16 */
-
-typedef enum _pam_mysql_err_t pam_mysql_err_t;
 
 typedef enum _pam_mysql_config_token_t pam_mysql_config_token_t;
 
@@ -383,7 +235,6 @@ static pam_mysql_err_t pam_mysql_get_host_info(pam_mysql_ctx_t *,
         const char **pretval);
 
 static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src_len);
-static void *xcalloc(size_t nmemb, size_t size);
 static char *xstrdup(const char *ptr);
 static void xfree(void *ptr);
 static void xfree_overwrite(char *ptr);
@@ -432,7 +283,7 @@ static size_t strnncpy(char *dest, size_t dest_size, const char *src, size_t src
  * @return mixed
  *   NULL if no allocation is made, or a cleared array of the requested size.
  */
-static void *xcalloc(size_t nmemb, size_t size)
+void *xcalloc(size_t nmemb, size_t size)
 {
     void *retval;
     double v = ((double)size) * (int)(nmemb & (((size_t)-1) >> 1));
@@ -858,80 +709,6 @@ static char *pam_mysql_sha1_data(const unsigned char *d, unsigned int sz, char *
 
     return md;
 }
-
-/**
- * Calculate the SHA256 hash of input and return as a hex string.
- *
- * @param const unsigned char *d
- *   The input buffer location.
- * @param unsigned int sz
- *   The size of the input.
- * @param char *md
- *   A pointer to the output buffer (NULL or at least 65 bytes).
- *
- * @return char *
- *   A pointer to the output buffer.
- */
-static char *pam_mysql_sha256_data(const unsigned char *d, unsigned int sz, char *md)
-{
-    size_t i, j;
-    unsigned char buf[32];
-
-    if (md == NULL) {
-        if ((md = xcalloc(64 + 1, sizeof(char))) == NULL) {
-            return NULL;
-        }
-    }
-
-    SHA256(d, (unsigned long)sz, buf);
-
-    for (i = 0, j = 0; i < 32; i++, j += 2) {
-        md[j + 0] = "0123456789abcdef"[(int)(buf[i] >> 4)];
-        md[j + 1] = "0123456789abcdef"[(int)(buf[i] & 0x0f)];
-    }
-    md[j] = '\0';
-
-    return md;
-}
-
-#define HAVE_PAM_MYSQL_SHA256_DATA
-
-/**
- * Calculate the SHA512 hash of input and return as a hex string.
- *
- * @param const unsigned char *d
- *   The input buffer location.
- * @param unsigned int sz
- *   The size of the input.
- * @param char *md
- *   A pointer to the output buffer (NULL or at least 129 bytes).
- *
- * @return char *
- *   A pointer to the output buffer.
- */
-static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char *md)
-{
-    size_t i, j;
-    unsigned char buf[64];
-
-    if (md == NULL) {
-        if ((md = xcalloc(128 + 1, sizeof(char))) == NULL) {
-            return NULL;
-        }
-    }
-
-    SHA512(d, (unsigned long)sz, buf);
-
-    for (i = 0, j = 0; i < 64; i++, j += 2) {
-        md[j + 0] = "0123456789abcdef"[(int)(buf[i] >> 4)];
-        md[j + 1] = "0123456789abcdef"[(int)(buf[i] & 0x0f)];
-    }
-    md[j] = '\0';
-
-    return md;
-}
-
-#define HAVE_PAM_MYSQL_SHA512_DATA
 
 /**
  * Calculate the salted SHA hash and return as a base64 string.
@@ -3833,13 +3610,7 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                     case 8:
                             {
 #ifdef HAVE_PAM_MYSQL_SHA512_DATA
-                                char buf[128];
-                                pam_mysql_sha512_data((unsigned char*)passwd, strlen(passwd), buf);
-                                vresult = strcmp(row[0], buf);
-                                {
-                                    char *p = buf - 1;
-                                    while (*(++p)) *p = '\0';
-                                }
+                                vresult = algo->check_password(password, row[0]);
 #else
                                 syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
 #endif
@@ -3849,13 +3620,7 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                     case 9:
                             {
 #ifdef HAVE_PAM_MYSQL_SHA256_DATA
-                                char buf[64];
-                                pam_mysql_sha256_data((unsigned char*)passwd, strlen(passwd), buf);
-                                vresult = strcmp(row[0], buf);
-                                {
-                                    char *p = buf - 1;
-                                    while (*(++p)) *p = '\0';
-                                }
+                                vresult = algo->check_password(password, row[0]);
 #else
                                 syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA256 hash is not supported in this build.");
 #endif
@@ -4115,12 +3880,7 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
             case 8:
                     {
 #ifdef HAVE_PAM_MYSQL_SHA512_DATA
-                        if (NULL == (encrypted_passwd = xcalloc(128 + 1, sizeof(char)))) {
-                            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                            err = PAM_MYSQL_ERR_ALLOC;
-                            goto out;
-                        }
-                        pam_mysql_sha512_data((unsigned char*)new_passwd, strlen(new_passwd), encrypted_passwd);
+                        err = algo->encrypt_password(new_password);
 #else
                         syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA512 hash is not supported in this build.");
                         err = PAM_MYSQL_ERR_NOTIMPL;
@@ -4131,12 +3891,7 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
             case 9:
                     {
 #ifdef HAVE_PAM_MYSQL_SHA256_DATA
-                        if (NULL == (encrypted_passwd = xcalloc(64 + 1, sizeof(char)))) {
-                            syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
-                            err = PAM_MYSQL_ERR_ALLOC;
-                            goto out;
-                        }
-                        pam_mysql_sha256_data((unsigned char*)new_passwd, strlen(new_passwd), encrypted_passwd);
+                        err = algo->encrypt_password(new_password);
 #else
                         syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish SHA256 hash is not supported in this build.");
                         err = PAM_MYSQL_ERR_NOTIMPL;

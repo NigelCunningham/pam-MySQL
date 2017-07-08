@@ -11,7 +11,7 @@ AC_SUBST(PACKAGE_NAME)
 
 LT_INIT([disable-static])
 
-AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_INSTALL
 
 dnl For PureFTP crypto.
