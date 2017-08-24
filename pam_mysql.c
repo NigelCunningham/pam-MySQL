@@ -2884,7 +2884,7 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
       case 1:
         break;
 
-      case 2:
+      default:
         syslog(LOG_AUTHPRIV | LOG_ERR, "%s", PAM_MYSQL_LOG_PREFIX "SELECT returned an indetermined result.");
         err = PAM_MYSQL_ERR_UNKNOWN;
         goto out;
