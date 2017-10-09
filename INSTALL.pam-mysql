@@ -1,10 +1,32 @@
 Installation instructions.
 ==========================
 
-1. Run "autoreconf -f -i". You can skip this step if you are building
+1. Install the dependencies for building pam-MySQL
+
+   Ubuntu (from https://github.com/NigelCunningham/pam-MySQL/issues/28):
+   apt-get install -y autoconf automake build-essential libmysqlclient-dev libpam-dev libssl-dev libtool pkg-config
+
+2. Run "autoreconf -f -i". You can skip this step if you are building
    from a distributed tarball and thus "configure" is already present.
 
-2. Run "./configure". The following parameters are accepted:
+   Nigel think the above should do everything necessary but there has
+   also been a report of a need to run:
+
+   libtoolize
+   aclocal
+   autoheader
+   autoreconf -f -i
+
+   Please open an issue on Github if you can confirm this and I'll
+   update this file.
+
+3. Run "./configure".
+
+   You may need some of the arguments below. Eg (Ubuntu):
+
+     ./configure --with-pam-mods-dir=/lib/security
+
+   The following parameters are accepted:
 
     --with-pam=[PAM_INSTALLATION_PREFIX]
 
@@ -56,11 +78,11 @@ Installation instructions.
         dependency and symbol conflict as PAM may be called from within
         a SASL client library.
 
-3. Run "make" to build the module.
+4. Run "make" to build the module.
         
-4. Run "make install" as root to install the module.
+5. Run "make install" as root to install the module.
 
-5. Make proper changes to an intended configuration file in /etc/pam.d/
+6. Make proper changes to an intended configuration file in /etc/pam.d/
    or /etc/pam.conf.
 
 The following are historic instructions - I haven't checked they still work.
