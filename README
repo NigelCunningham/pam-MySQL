@@ -124,16 +124,31 @@ crypt (plain)
 							PAM-MySQL uses the function defined in MySQL's
 							C-client API instead of using PASSWORD() SQL function
 							in the query.
-                        
+
        3 (or "md5")   	= Use plain hex MD5.
 
        4 (or "sha1")  	= Use plain hex SHA1.
-       
+
        5 (or "drupal7")	= Use Drupal7 salted passwords
 
 md5 (false)
 
     Use MD5 by default for crypt(3) hash. Only meaningful when crypt is
+    set to "Y".
+
+sha256 (false)
+
+    Use SHA-256 by default for crypt(3) hash. Only meaningful when crypt is
+    set to "Y".
+
+sha512 (false)
+
+    Use SHA-512 by default for crypt(3) hash. Only meaningful when crypt is
+    set to "Y".
+
+blowfish (false)
+
+    Use Blowfish by default for crypt(3) hash. Only meaningful when crypt is
     set to "Y".
 
 use_323_passwd (false)
@@ -272,7 +287,7 @@ A. PAM is an acronym for Pluggable Authentication Modules.
    information.
 
 Q. Are there any tools for changing passwords, etc. without updating tables
-   directly through the command-line client program? 
+   directly through the command-line client program?
 
 A. You can use "passwd" program for that purpose. Note that pam-mysql doesn't
    permit password change without the root privilege (pid=0).
@@ -368,4 +383,3 @@ LINKS
 
 - Sendmail-SQL:
   http://www.sourceforge.net/projects/sendmail-sql
-

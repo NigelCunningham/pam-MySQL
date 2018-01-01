@@ -1,3 +1,7 @@
+2018-01-01  Radoslaw Ejsmont  <radoslaw@ejsmont.net>
+
+	* pam_mysql.c: Added blowfish, sha512 and sha256 support for crypt.
+
 2006-01-09  Moriyoshi Koizumi  <moriyoshi@users.sourceforge.net>
 
 	* pam_mysql.c: PR #1325395 - add "disconnect_every_op" option that forces

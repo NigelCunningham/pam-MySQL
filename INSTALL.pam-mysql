@@ -9,7 +9,7 @@ Installation instructions.
 2. Run "autoreconf -f -i". You can skip this step if you are building
    from a distributed tarball and thus "configure" is already present.
 
-   Nigel think the above should do everything necessary but there has
+   Nigel thinks the above should do everything necessary but there has
    also been a report of a need to run:
 
    libtoolize

@@ -263,6 +263,10 @@ typedef struct _pam_mysql_ctx_t {
     int crypt_type;
     int use_323_passwd;
     int md5;
+    int sha256;
+    int sha512;
+    int blowfish;
+    int rounds;
     int sqllog;
     int verbose;
     int use_first_pass;
@@ -740,15 +744,15 @@ static char *pam_mysql_md5_data(const unsigned char *d, unsigned int sz, char *m
  *   The length of the decoded string
  */
 static size_t calcDecodeLength(const char* b64input) {
-	size_t len = strlen(b64input),
-		padding = 0;
+    size_t len = strlen(b64input),
+        padding = 0;
 
-	if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
-		padding = 2;
-	else if (b64input[len-1] == '=') //last char is =
-		padding = 1;
+    if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
+        padding = 2;
+    else if (b64input[len-1] == '=') //last char is =
+        padding = 1;
 
-	return (len*3)/4 - padding;
+    return (len*3)/4 - padding;
 }
 
 /**
@@ -769,27 +773,27 @@ static size_t calcDecodeLength(const char* b64input) {
  *   0 = success
  */
 int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) {
-	BIO *bio, *b64;
-	BUF_MEM *bufferPtr;
-	size_t b64len;
+    BIO *bio, *b64;
+    BUF_MEM *bufferPtr;
+    size_t b64len;
 
-	b64 = BIO_new(BIO_f_base64());
-	bio = BIO_new(BIO_s_mem());
-	bio = BIO_push(b64, bio);
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_new(BIO_s_mem());
+    bio = BIO_push(b64, bio);
 
-	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Ignore newlines - write everything in one line
-	BIO_set_close(bio, BIO_CLOSE);
-	BIO_write(bio, buffer, length);
-	BIO_flush(bio);
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Ignore newlines - write everything in one line
+    BIO_set_close(bio, BIO_CLOSE);
+    BIO_write(bio, buffer, length);
+    BIO_flush(bio);
 
-	BIO_get_mem_ptr(bio, &bufferPtr);
-	b64len = bufferPtr->length;
-	(*b64text) = (char *) malloc((b64len + 1) * sizeof(char));
-	memcpy(*b64text, bufferPtr->data, b64len);
-	(*b64text)[b64len] = '\0';
-	BIO_free_all(bio);
+    BIO_get_mem_ptr(bio, &bufferPtr);
+    b64len = bufferPtr->length;
+    (*b64text) = (char *) malloc((b64len + 1) * sizeof(char));
+    memcpy(*b64text, bufferPtr->data, b64len);
+    (*b64text)[b64len] = '\0';
+    BIO_free_all(bio);
 
-	return (0); //success
+    return (0); //success
 }
 
 /**
@@ -810,22 +814,22 @@ int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) {
  *   0 = success
  */
 static int Base64Decode(char* b64message, unsigned char** buffer, size_t* length) {
-	BIO *bio, *b64;
+    BIO *bio, *b64;
 
-	int decodeLen = calcDecodeLength(b64message);
-	*buffer = (unsigned char*)malloc(decodeLen + 1);
-	(*buffer)[decodeLen] = '\0';
+    int decodeLen = calcDecodeLength(b64message);
+    *buffer = (unsigned char*)malloc(decodeLen + 1);
+    (*buffer)[decodeLen] = '\0';
 
-	bio = BIO_new_mem_buf(b64message, -1);
-	b64 = BIO_new(BIO_f_base64());
-	bio = BIO_push(b64, bio);
+    bio = BIO_new_mem_buf(b64message, -1);
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_push(b64, bio);
 
-	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
-	*length = BIO_read(bio, *buffer, strlen(b64message));
-	assert(*length == decodeLen); //length should equal decodeLen, else something went horribly wrong
-	BIO_free_all(bio);
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
+    *length = BIO_read(bio, *buffer, strlen(b64message));
+    assert(*length == decodeLen); //length should equal decodeLen, else something went horribly wrong
+    BIO_free_all(bio);
 
-	return (0); //success
+    return (0); //success
 }
 
 /**
@@ -956,29 +960,29 @@ static char *pam_mysql_sha512_data(const unsigned char *d, unsigned int sz, char
  */
 static char *pam_mysql_ssha_data(const unsigned char *d, size_t sz, char *salt, size_t salt_length, char *md)
 {
-	if (md == NULL) {
-		if ((md = xcalloc(40 + 1, sizeof(char))) == NULL) {
-			return NULL;
-		}
-	}
+    if (md == NULL) {
+        if ((md = xcalloc(40 + 1, sizeof(char))) == NULL) {
+            return NULL;
+        }
+    }
 
-	unsigned char sha_hash_data[sz + salt_length];
-	memcpy(sha_hash_data, d, sz);
-	memcpy(&(sha_hash_data[sz]), salt, salt_length);
+    unsigned char sha_hash_data[sz + salt_length];
+    memcpy(sha_hash_data, d, sz);
+    memcpy(&(sha_hash_data[sz]), salt, salt_length);
 
-	unsigned char buf[20];
-	SHA1(sha_hash_data, sz + salt_length, buf);
+    unsigned char buf[20];
+    SHA1(sha_hash_data, sz + salt_length, buf);
 
-	unsigned char b64_hash_data[20 + salt_length];
-	memcpy(b64_hash_data, buf, 20);
-	memcpy(&(b64_hash_data[20]), salt, salt_length);
+    unsigned char b64_hash_data[20 + salt_length];
+    memcpy(b64_hash_data, buf, 20);
+    memcpy(&(b64_hash_data[20]), salt, salt_length);
 
-	char* base64EncodeOutput;
-	Base64Encode(b64_hash_data, 20 + salt_length, &base64EncodeOutput);
+    char* base64EncodeOutput;
+    Base64Encode(b64_hash_data, 20 + salt_length, &base64EncodeOutput);
 
-	memcpy(md, base64EncodeOutput, strlen(base64EncodeOutput) + 1);
+    memcpy(md, base64EncodeOutput, strlen(base64EncodeOutput) + 1);
 
-	return md;
+    return md;
 }
 #endif
 
@@ -1338,6 +1342,28 @@ static pam_mysql_err_t pam_mysql_boolean_opt_setter(void *val, const char *newva
     return PAM_MYSQL_ERR_SUCCESS;
 }
 
+/* {{{ pam_mysql_numeric_opt_getter
+ */
+static pam_mysql_err_t pam_mysql_numeric_opt_getter(void *val, const char **pretval, int *to_release)
+{
+    char buf[20];
+    snprintf(buf, sizeof(buf), "%d", *(int *)val);
+  *pretval = buf;
+  *to_release = 0;
+
+  return PAM_MYSQL_ERR_SUCCESS;
+}
+/* }}} */
+
+/* {{{ pam_mysql_numeric_opt_setter */
+static pam_mysql_err_t pam_mysql_numeric_opt_setter(void *val, const char *newval_str)
+{
+  *(long int *)val = strtol(newval_str, NULL, 10);
+
+  return PAM_MYSQL_ERR_SUCCESS;
+}
+/* }}} */
+
 /**
  * Get the name matching a numeric key for a crypt method.
  *
@@ -1489,6 +1515,11 @@ static pam_mysql_option_accessor_t pam_mysql_boolean_opt_accr = {
     pam_mysql_boolean_opt_setter
 };
 
+static pam_mysql_option_accessor_t pam_mysql_numeric_opt_accr = {
+  pam_mysql_numeric_opt_getter,
+  pam_mysql_numeric_opt_setter
+};
+
 static pam_mysql_option_accessor_t pam_mysql_crypt_opt_accr = {
     pam_mysql_crypt_opt_getter,
     pam_mysql_crypt_opt_setter
@@ -1507,6 +1538,10 @@ static pam_mysql_option_t options[] = {
     PAM_MYSQL_DEF_OPTION(statcolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(crypt, crypt_type, &pam_mysql_crypt_opt_accr),
     PAM_MYSQL_DEF_OPTION(md5, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION(sha256, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION(sha512, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION(blowfish, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION(rounds, &pam_mysql_numeric_opt_accr),
     PAM_MYSQL_DEF_OPTION(sqllog, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION(verbose, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION(logtable, &pam_mysql_string_opt_accr),
@@ -2570,6 +2605,10 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     PAM_MYSQL_DEF_OPTION2(users.status_column, statcolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.password_crypt, crypt_type, &pam_mysql_crypt_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.use_md5, md5, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.use_sha256, sha256, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.use_sha512, sha512, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.use_blowfish, blowfish, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.rounds, rounds, &pam_mysql_numeric_opt_accr),
     PAM_MYSQL_DEF_OPTION2(verbose, verbose, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(log.enabled, sqllog, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(log.table, logtable, &pam_mysql_string_opt_accr),
@@ -2893,7 +2932,11 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
     ctx->statcolumn = xstrdup("0");
     ctx->crypt_type = 0;
     ctx->use_323_passwd = 0;
-    ctx->md5 = -1;
+    ctx->md5 = 0;
+    ctx->sha256 = 0;
+    ctx->sha512 = 0;
+    ctx->blowfish = 0;
+    ctx->rounds = -1;
     ctx->sqllog = 0;
     ctx->verbose = 0;
     ctx->use_first_pass = 0;
@@ -3140,7 +3183,7 @@ pam_mysql_err_t pam_mysql_get_option(pam_mysql_ctx_t *ctx, const char **pretval,
 
 /**
  * Parse arguments.
- * 
+ *
  * @param pam_mysql_ctx_t *ctx
  *   A pointer to the context data structure.
  * @param int argc
@@ -3938,29 +3981,76 @@ static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salt
     }
 #endif
 
+    if ((ctx->blowfish + ctx->sha512 + ctx->sha256 + ctx->md5) > 1) {
+        syslog(LOG_AUTHPRIV | LOG_ERR, "Only one of blowfish, sha512, sha256 or md5 should be specified. Falling back to the strongest of selected values.");
+    }
+
     q = salt;
-    if (ctx->md5) {
-        strcpy(salt, "$1$");
-        q += sizeof("$1$") - 1;
-        i = 8;
-    } else {
-        i = 2;
-    }
 
-    while (i-- > 0) {
-        *(q++) = saltstr[seed % 64];
-        seed = (((seed ^ 0x967e3c5a) << 3) ^ (~(seed >> 2) + i));
-    }
+#ifdef HAVE_BLOWFISH
+    if (ctx->blowfish) {
+        strcpy(salt, "$2a$");
+        q += sizeof("$2a$") - 1;
+        if (ctx->rounds < 4 || ctx->rounds > 31) {
+            strcpy(q, "05$");
+            q += sizeof("05$") - 1;
+        } else {
+            int a;
+            a = snprintf(q, 5, "%02d$", ctx->rounds);
+            if (a == 3) {
+                q += a;
+            }
+        }
+        i = 22;
+    } else if ((ctx->sha256) || (ctx->sha512)) {
+#else
+        if (ctx->blowfish) {
+            syslog(LOG_AUTHPRIV | LOG_ERR, "Blowfish is unavailable in this version in glibc.");
+        }
+        if ((ctx->sha256) || (ctx->sha512)) {
+#endif
+            if (ctx->sha512) {
+                strcpy(salt, "$6$");
+                q += sizeof("$6$") - 1;
+            } else {
+                strcpy(salt, "$5$");
+                q += sizeof("$5$") - 1;
+            }
+            if ((ctx->rounds >= 1000) && (ctx->rounds < INT_MAX)) {
+                if (ctx->rounds >= 10000000) {
+                    strcpy(q, "rounds=9999999$");
+                    q += sizeof("rounds=9999999$") - 1;
+                } else {
+                    int a;
+                    a = snprintf(q, 17, "rounds=%d$", ctx->rounds);
+                    if (a < 16) {
+                        q += a;
+                    }
+                }
+            }
+            i = 16;
+        } else if (ctx->md5) {
+            strcpy(salt, "$1$");
+            q += sizeof("$1$") - 1;
+            i = 8;
+        } else {
+            i = 2;
+        }
 
-    if (ctx->md5) {
-        *(q++) = '$';
-    }
-    *q = '\0';
+        while (i-- > 0) {
+            *(q++) = saltstr[seed % 64];
+            seed = (((seed ^ 0x967e3c5a) << 3) ^ (~(seed >> 2) + i));
+        }
 
-    if (ctx->verbose) {
-        syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_saltify() returning salt = %s.", salt);
+	if ((ctx->md5)||(ctx->sha256)||(ctx->sha512)||(ctx->blowfish)) {
+            *(q++) = '$';
+        }
+        *q = '\0';
+
+        if (ctx->verbose) {
+            syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "pam_mysql_saltify() returning salt = %s.", salt);
+        }
     }
-}
 
 /**
  * Update the password in MySQL.
@@ -4013,7 +4103,7 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
                 break;
 
             case 1: {
-                        char salt[18];
+			char salt[64];
                         pam_mysql_saltify(ctx, salt, new_passwd);
                         if (NULL == (encrypted_passwd = xstrdup(crypt(new_passwd, salt)))) {
                             syslog(LOG_AUTHPRIV | LOG_CRIT, PAM_MYSQL_LOG_PREFIX "allocation failure at " __FILE__ ":%d", __LINE__);
