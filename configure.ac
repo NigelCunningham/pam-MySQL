@@ -51,7 +51,7 @@ AC_ARG_WITH([cyrus-sasl2], [  --with-cyrus-sasl2[[=PREFIX]] specify Cyrus-SASL2 
     PAM_MYSQL_CHECK_CYRUS_SASL_V2([/usr /usr/local /opt/cyrus-sasl /opt/sasl], [
       AC_DEFINE([HAVE_CYRUS_SASL_V2], [1], [Define to 1 if Cyrus-SASL Version 2 is installed])
       sasl_v2_avail=1
-    ]) 
+    ])
   else
     PAM_MYSQL_CHECK_CYRUS_SASL_V2(["$withval"], [
       AC_DEFINE([HAVE_CYRUS_SASL_V2], [1], [Define to 1 if Cyrus-SASL Version 2 is installed])
@@ -69,7 +69,7 @@ AC_ARG_WITH([cyrus-sasl], [  --with-cyrus-sasl[[=PREFIX]] specify Cyrus-SASL ins
       dnl try autodetection...
       PAM_MYSQL_CHECK_CYRUS_SASL_V1([/usr /usr/local /opt/cyrus-sasl /opt/sasl], [
         AC_DEFINE([HAVE_CYRUS_SASL_V1], [1], [Define to 1 if Cyrus-SASL Version 1 is installed])
-      ]) 
+      ])
     else
       PAM_MYSQL_CHECK_CYRUS_SASL_V1(["$withval"], [
         AC_DEFINE([HAVE_CYRUS_SASL_V1], [1], [Define to 1 if Cyrus-SASL Version 1 is installed])
@@ -107,6 +107,7 @@ AC_ARG_WITH([pam_mods_dir], [  --with-pam-mods-dir=DIR specify PAM module instal
 
 PAM_MYSQL_CHECK_MD5_HEADERS
 AC_SEARCH_LIBS([crypt],[crypt],,[AC_MSG_ERROR([unable to find the crypt() function])])
+PAM_MYSQL_CHECK_BLOWFISH
 
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile pam_mysql.spec])

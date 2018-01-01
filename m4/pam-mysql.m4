@@ -293,7 +293,7 @@ int main()
         if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
           AC_CHECK_LIB([$sasl_v1_lib_name], [sasl_client_init], [
             sasl_v1_LIBS="-L$dir -l$sasl_v1_lib_name"
-          ],[]) 
+          ],[])
         fi
         LIBS="$ac_save_LIBS"
       fi
@@ -342,7 +342,7 @@ int main()
         if eval test -e "$dir/$libname_spec$shrext_cmds" -o -e "$dir/$libname_spec.$libext"; then
           AC_CHECK_LIB([$sasl_v2_lib_name], [sasl_v2_client_init], [
             sasl_v2_LIBS="-L$dir -l$sasl_v2_lib_name"
-          ],[]) 
+          ],[])
         fi
         LIBS="$ac_save_LIBS"
       fi
@@ -441,6 +441,24 @@ AC_DEFUN([PAM_MYSQL_CHECK_GETHOSTBYNAME_R], [
     ])
   ], [])
 
-   
+
   CFLAGS="$ac_save_CFLAGS"
+])
+
+AC_DEFUN([PAM_MYSQL_CHECK_BLOWFISH], [
+  SALTSTRING=['$''2a$''05$gc8jRU6QJCbcys8HctAy1L$']
+  AC_MSG_CHECKING([if crypt() supports blowfish])
+  AC_TRY_RUN([
+#include <crypt.h>
+
+int main()
+{
+  return ! crypt("test", "$SALTSTRING");
+}
+  ], [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE([HAVE_BLOWFISH], [], [Blowfish algorithm is supported])
+  ], [
+    AC_MSG_RESULT([no])
+  ])
 ])
