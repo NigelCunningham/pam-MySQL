@@ -175,14 +175,14 @@
 // Implementation from commit 2db6b50c7b7c638104bd9639994f0574e8f4813c in Pure-ftp source.
 void make_scrambled_password(char scrambled_password[42], const char password[255])
 {
-	SHA1_CTX      ctx;
-	unsigned char h0[20], h1[20];
+  SHA1_CTX      ctx;
+  unsigned char h0[20], h1[20];
 
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, password, strlen(password));
-	SHA1Final(h0, &ctx);
-	SHA1Init(&ctx);
-	SHA1Update(&ctx, h0, sizeof h0);
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, password, strlen(password));
+  SHA1Final(h0, &ctx);
+  SHA1Init(&ctx);
+  SHA1Update(&ctx, h0, sizeof h0);
 # ifdef HAVE_EXPLICIT_BZERO
     explicit_bzero(h0, strlen(password));
 # else
@@ -194,10 +194,10 @@ void make_scrambled_password(char scrambled_password[42], const char password[25
     }
 # endif
 
-	SHA1Final(h1, &ctx);
-	*scrambled_password = '*';
-	hexify(scrambled_password + 1U, h1,
-			42, sizeof h1);
+  SHA1Final(h1, &ctx);
+  *scrambled_password = '*';
+  hexify(scrambled_password + 1U, h1,
+         42, sizeof h1);
 }
 #endif
 
@@ -258,10 +258,10 @@ typedef struct _pam_mysql_ctx_t {
   int crypt_type;
   int use_323_passwd;
   int md5;
-	int sha256;
-	int sha512;
-	int blowfish;
-	int rounds;
+  int sha256;
+  int sha512;
+  int blowfish;
+  int rounds;
   int sqllog;
   int verbose;
   int use_first_pass;
@@ -1078,11 +1078,11 @@ static pam_mysql_option_t options[] = {
   PAM_MYSQL_DEF_OPTION(passwdcolumn, &pam_mysql_string_opt_accr),
   PAM_MYSQL_DEF_OPTION(statcolumn, &pam_mysql_string_opt_accr),
   PAM_MYSQL_DEF_OPTION2(crypt, crypt_type, &pam_mysql_crypt_opt_accr),
-	PAM_MYSQL_DEF_OPTION(md5, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION(sha256, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION(sha512, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION(blowfish, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION(rounds, &pam_mysql_numeric_opt_accr),
+  PAM_MYSQL_DEF_OPTION(md5, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION(sha256, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION(sha512, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION(blowfish, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION(rounds, &pam_mysql_numeric_opt_accr),
   PAM_MYSQL_DEF_OPTION(sqllog, &pam_mysql_boolean_opt_accr),
   PAM_MYSQL_DEF_OPTION(verbose, &pam_mysql_boolean_opt_accr),
   PAM_MYSQL_DEF_OPTION(logtable, &pam_mysql_string_opt_accr),
@@ -1979,11 +1979,11 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
   PAM_MYSQL_DEF_OPTION2(users.password_column, passwdcolumn, &pam_mysql_string_opt_accr),
   PAM_MYSQL_DEF_OPTION2(users.status_column, statcolumn, &pam_mysql_string_opt_accr),
   PAM_MYSQL_DEF_OPTION2(users.password_crypt, crypt_type, &pam_mysql_crypt_opt_accr),
-	PAM_MYSQL_DEF_OPTION2(users.use_md5, md5, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION2(users.use_sha256, sha256, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION2(users.use_sha512, sha512, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION2(users.use_blowfish, blowfish, &pam_mysql_boolean_opt_accr),
-	PAM_MYSQL_DEF_OPTION2(users.rounds, rounds, &pam_mysql_numeric_opt_accr),
+  PAM_MYSQL_DEF_OPTION2(users.use_md5, md5, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION2(users.use_sha256, sha256, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION2(users.use_sha512, sha512, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION2(users.use_blowfish, blowfish, &pam_mysql_boolean_opt_accr),
+  PAM_MYSQL_DEF_OPTION2(users.rounds, rounds, &pam_mysql_numeric_opt_accr),
   PAM_MYSQL_DEF_OPTION2(verbose, verbose, &pam_mysql_boolean_opt_accr),
   PAM_MYSQL_DEF_OPTION2(log.enabled, sqllog, &pam_mysql_boolean_opt_accr),
   PAM_MYSQL_DEF_OPTION2(log.table, logtable, &pam_mysql_string_opt_accr),
@@ -2262,10 +2262,10 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
   ctx->crypt_type = 0;
   ctx->use_323_passwd = 0;
   ctx->md5 = 0;
-	ctx->sha256 = 0;
-	ctx->sha512 = 0;
-	ctx->blowfish = 0;
-	ctx->rounds = -1;
+  ctx->sha256 = 0;
+  ctx->sha512 = 0;
+  ctx->blowfish = 0;
+  ctx->rounds = -1;
   ctx->sqllog = 0;
   ctx->verbose = 0;
   ctx->use_first_pass = 0;
@@ -3130,55 +3130,55 @@ static void pam_mysql_saltify(pam_mysql_ctx_t *ctx, char *salt, const char *salt
   }
 #endif
 
-	if ((ctx->blowfish + ctx->sha512 + ctx->sha256 + ctx->md5) > 1) {
-		syslog(LOG_AUTHPRIV | LOG_ERR, "Only one of blowfish, sha512, sha256 or md5 should be specified. Falling back to the strongest of selected values.");
-	}
+  if ((ctx->blowfish + ctx->sha512 + ctx->sha256 + ctx->md5) > 1) {
+    syslog(LOG_AUTHPRIV | LOG_ERR, "Only one of blowfish, sha512, sha256 or md5 should be specified. Falling back to the strongest of selected values.");
+  }
 
   q = salt;
 
 #ifdef HAVE_BLOWFISH
-	if (ctx->blowfish) {
-		strcpy(salt, "$2a$");
+  if (ctx->blowfish) {
+    strcpy(salt, "$2a$");
     q += sizeof("$2a$") - 1;
-		if (ctx->rounds < 4 || ctx->rounds > 31) {
-			strcpy(q, "05$");
-			q += sizeof("05$") - 1;
-		} else {
-			int a;
-			a = snprintf(q, 5, "%02d$", ctx->rounds);
-			if (a == 3) {
-				q += a;
-			}
-		}
+    if (ctx->rounds < 4 || ctx->rounds > 31) {
+      strcpy(q, "05$");
+      q += sizeof("05$") - 1;
+    } else {
+      int a;
+      a = snprintf(q, 5, "%02d$", ctx->rounds);
+      if (a == 3) {
+        q += a;
+      }
+    }
     i = 22;
-	} else if ((ctx->sha256) || (ctx->sha512)) {
+  } else if ((ctx->sha256) || (ctx->sha512)) {
 #else
-	if (ctx->blowfish) {
-		syslog(LOG_AUTHPRIV | LOG_ERR, "Blowfish is unavailable in this version in glibc.");
-	}
-	if ((ctx->sha256) || (ctx->sha512)) {
+  if (ctx->blowfish) {
+    syslog(LOG_AUTHPRIV | LOG_ERR, "Blowfish is unavailable in this version in glibc.");
+  }
+  if ((ctx->sha256) || (ctx->sha512)) {
 #endif
-		if (ctx->sha512) {
-			strcpy(salt, "$6$");
-			q += sizeof("$6$") - 1;
-		} else {
-			strcpy(salt, "$5$");
-    	q += sizeof("$5$") - 1;
-		}
-		if ((ctx->rounds >= 1000) && (ctx->rounds < INT_MAX)) {
-			if (ctx->rounds >= 10000000) {
-				strcpy(q, "rounds=9999999$");
-				q += sizeof("rounds=9999999$") - 1;
-			} else {
-				int a;
-				a = snprintf(q, 17, "rounds=%d$", ctx->rounds);
-				if (a < 16) {
-					q += a;
-				}
-			}
-		}
+    if (ctx->sha512) {
+      strcpy(salt, "$6$");
+      q += sizeof("$6$") - 1;
+    } else {
+      strcpy(salt, "$5$");
+      q += sizeof("$5$") - 1;
+    }
+    if ((ctx->rounds >= 1000) && (ctx->rounds < INT_MAX)) {
+      if (ctx->rounds >= 10000000) {
+        strcpy(q, "rounds=9999999$");
+        q += sizeof("rounds=9999999$") - 1;
+      } else {
+        int a;
+        a = snprintf(q, 17, "rounds=%d$", ctx->rounds);
+        if (a < 16) {
+          q += a;
+        }
+      }
+    }
     i = 16;
-	} else if (ctx->md5) {
+  } else if (ctx->md5) {
     strcpy(salt, "$1$");
     q += sizeof("$1$") - 1;
     i = 8;
