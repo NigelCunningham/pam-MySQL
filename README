@@ -130,6 +130,14 @@ crypt (plain)
        4 (or "sha1")  	= Use plain hex SHA1.
 
        5 (or "drupal7")	= Use Drupal7 salted passwords
+       
+       6 (or "joomla15")
+       
+       7 (or "ssha")	
+       
+       8 (or "sha512")	
+       
+       9 (or "sha256")	
 
 md5 (false)
 
