@@ -113,6 +113,6 @@ PAM_MYSQL_CHECK_BLOWFISH
 
 AC_SUBST(PAM_MODS_DIR)
 AC_CONFIG_FILES([Makefile pam_mysql.spec])
-AC_SEARCH_LIBS([make_scrambled_password],[mysql],[AC_DEFINE([HAVE_MAKE_SCRAMBLED_PASSWORD], [1], [Build own SHA1 support.])])
+AC_SEARCH_LIBS([make_scrambled_password],[mysql],[AC_DEFINE([HAVE_MAKE_SCRAMBLED_PASSWORD], [1], [Define to 1 if make_scrambled_password is available])])
 
 AC_OUTPUT
