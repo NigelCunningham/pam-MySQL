@@ -1,4 +1,6 @@
 # install this platform-dependent module by the 'install-exec' rules
+SUBDIRS = . tests
+
 pamexecdir = @PAM_MODS_DIR@
 pamexec_LTLIBRARIES = pam_mysql.la
 

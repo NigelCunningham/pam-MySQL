@@ -112,7 +112,7 @@ AC_SEARCH_LIBS([crypt],[crypt],,[AC_MSG_ERROR([unable to find the crypt() functi
 PAM_MYSQL_CHECK_BLOWFISH
 
 AC_SUBST(PAM_MODS_DIR)
-AC_CONFIG_FILES([Makefile pam_mysql.spec])
+AC_CONFIG_FILES([Makefile pam_mysql.spec tests/Makefile])
 AC_SEARCH_LIBS([make_scrambled_password],[mysql],[AC_DEFINE([HAVE_MAKE_SCRAMBLED_PASSWORD], [1], [Build own SHA1 support.])])
 
 AC_OUTPUT
