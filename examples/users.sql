@@ -1,0 +1,60 @@
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+DROP TABLE IF EXISTS `grouplist`;
+CREATE TABLE `grouplist` (
+  `username` varchar(50) NOT NULL,
+  `gid` int(11) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS `groups`;
+CREATE TABLE `groups` (
+  `gid` int(11) NOT NULL,
+  `name` varchar(30) NOT NULL DEFAULT '',
+  `status` char(1) DEFAULT 'A',
+  `password` varchar(64) NOT NULL DEFAULT 'x'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `username` varchar(50) NOT NULL DEFAULT '',
+  `name` varchar(32) NOT NULL DEFAULT '',
+  `shell` varchar(20) NOT NULL DEFAULT '/bin/bash',
+  `password` varchar(160) DEFAULT '',
+  `status` char(1) NOT NULL DEFAULT 'N',
+  `uid` int(11) NOT NULL,
+  `gid` int(11) NOT NULL DEFAULT 100,
+  `gecos` varchar(128) NOT NULL DEFAULT '',
+  `homedir` varchar(32) NOT NULL DEFAULT '/bin/sh',
+  `lstchg` int(11) NOT NULL DEFAULT -1,
+  `min` int(11) NOT NULL DEFAULT 0,
+  `max` int(5) NOT NULL DEFAULT 99999,
+  `warn` int(11) NOT NULL DEFAULT 7,
+  `inact` int(11) NOT NULL DEFAULT -1,
+  `expire` int(11) DEFAULT -1,
+  `flag` int(10) NOT NULL DEFAULT -1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+ALTER TABLE `groups`
+  ADD PRIMARY KEY (`gid`);
+
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`uid`),
+  ADD KEY `username` (`username`);
+
+
+ALTER TABLE `groups`
+  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
