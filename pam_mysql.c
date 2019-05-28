@@ -4161,6 +4161,28 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
 #endif
                     break;
 
+            case 5:
+                    {
+#if defined(HAVE_PAM_MYSQL_MD5_DATA) && defined(HAVE_PAM_MYSQL_SHA1_DATA)
+                        char setting[] = "$P$XYYYYYYYY";
+                        char *itoa64   = _password_itoa64();
+                        int i;
+
+                        srandom(time(NULL));
+                        setting[3] = itoa64[DRUPAL_HASH_COUNT];
+                        for (i=4; i<12; ++i) {
+                            setting[i] = itoa64[random() % strlen(itoa64)];
+                        }
+                        encrypted_passwd = d7_password_crypt(1, (char*)new_passwd, setting);
+                        if (NULL == encrypted_passwd) {
+                            err = PAM_MYSQL_ERR_INVAL;
+                            goto out;
+                        }
+#else
+                        syslog(LOG_AUTHPRIV | LOG_ERR, PAM_MYSQL_LOG_PREFIX "non-crypt()ish MD5 hash or SHA support lacking in this build.");
+#endif
+                    } break;
+
             case 6:
                     {
 #ifdef HAVE_PAM_MYSQL_MD5_DATA
