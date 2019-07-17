@@ -320,7 +320,7 @@ Q. I set up saslauthd (of Cyrus-SASL) to use PAM-MySQL for authentication and
    noticed some authentication mechanisms such as CRAM-MD5 don't work. Why?
 
 A. CRAM-MD5 are DIGEST-MD5 are Challenge-Response authentication mechanisms
-   (indeed CRAM is short for Challange-Response Authentication Mechanism),
+   (indeed CRAM is short for Challenge-Response Authentication Mechanism),
    plain-text passwords have to be supplied to the instance that handles
    authentication communication with the user (that is, the SASL client
    library), rather than the authenticator (the server). Therefore, it is not
