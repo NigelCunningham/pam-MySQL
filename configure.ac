@@ -96,7 +96,7 @@ AC_ARG_WITH([pam_mods_dir], [  --with-pam-mods-dir=DIR specify PAM module instal
   PAM_MODS_DIR="$withval"
 ], [
   PAM_MODS_DIR=
-  for dir in "/lib/security" "/lib/pam" "/usr/lib/security" "/usr/lib/pam" \
+  for dir in "/lib/security" "/lib64/security" "/lib/pam" "/usr/lib/security" "/usr/lib/pam" \
              "$libdir/pam" "$libdir/security"; do
     if test -d "$dir"; then
       PAM_MODS_DIR="$dir"

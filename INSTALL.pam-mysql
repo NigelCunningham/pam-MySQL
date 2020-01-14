@@ -4,7 +4,15 @@ Installation instructions.
 1. Install the dependencies for building pam-MySQL
 
    Ubuntu (from https://github.com/NigelCunningham/pam-MySQL/issues/28):
-   apt-get install -y autoconf automake build-essential libmysqlclient-dev libpam-dev libssl-dev libtool pkg-config
+     apt-get install -y autoconf automake build-essential libmysqlclient-dev libpam-dev libssl-dev libtool pkg-config
+
+   CentOS 7:
+     yum install autoconf libtool make gcc mariadb-devel pam-devel
+
+     If you use the MariaDB repository, you might need to also install
+     the MariaDB-shared package, otherwise you get a cryptic
+       "configure: error: unable to find the crypt() function"
+      error. (see https://github.com/NigelCunningham/pam-MySQL/issues/42 )
 
 2. Run "autoreconf -f -i". You can skip this step if you are building
    from a distributed tarball and thus "configure" is already present.
