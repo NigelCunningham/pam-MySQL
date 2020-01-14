@@ -223,7 +223,6 @@ config_file
     - users.database (db)
     - users.db_user (user)
     - users.db_passwd (passwd)
-    - users.where_clause (host)
     - users.table (table)
     - users.update_table (update_table)
     - users.user_column (usercolumn)
