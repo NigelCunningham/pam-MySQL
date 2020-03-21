@@ -33,7 +33,7 @@ typedef struct MD5_CTX {
 
 void MD5Init(MD5_CTX * context);
 void MD5Update(MD5_CTX * context, const unsigned char * data, size_t len);
-void MD5Final(unsigned char digest[16], MD5_CTX *context);
+void MD5Final(char digest[16], MD5_CTX *context);
 
 #endif
 

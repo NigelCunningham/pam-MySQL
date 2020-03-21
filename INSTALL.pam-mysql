@@ -4,85 +4,23 @@ Installation instructions.
 1. Install the dependencies for building pam-MySQL
 
    Ubuntu (from https://github.com/NigelCunningham/pam-MySQL/issues/28):
-   apt-get install -y autoconf automake build-essential libmysqlclient-dev libpam-dev libssl-dev libtool pkg-config
+   apt-get install -y meson build-essential libmysqlclient-dev libpam-dev libssl-dev libtool pkg-config
 
-2. Run "autoreconf -f -i". You can skip this step if you are building
-   from a distributed tarball and thus "configure" is already present.
+2. Make a build directory and run meson:
 
-   Nigel thinks the above should do everything necessary but there has
-   also been a report of a need to run:
+   mkdir build
+   meson build
 
-   libtoolize
-   aclocal
-   autoheader
-   autoreconf -f -i
+3. Change into the build directory and run ninja:
 
-   Please open an issue on Github if you can confirm this and I'll
-   update this file.
+   cd build
+   ninja
 
-3. Run "./configure".
+** TO COMPLETE UPDATING FOR MESON BUILD ***
 
-   You may need some of the arguments below. Eg (Ubuntu):
+4. Run "make install" as root to install the module.
 
-     ./configure --with-pam-mods-dir=/lib/security
-
-   The following parameters are accepted:
-
-    --with-pam=[PAM_INSTALLATION_PREFIX]
-
-        Specifies where the PAM headers required to build
-        the package are installed. This may help when you are
-        building a system in a different root. This can be
-        omitted to turn on auto-detection.
-
-    --with-pam-mods-dir=[MODULE_DIRECTORY]
-
-        Specifies where to install the product
-        (pam_mysql.so). This can be omitted also.
-
-    --with-mysql=[MYSQL_INSTALLATION_PREFIX]
-
-        Specifies where the required MySQL headers and
-        libraries are installed. If not given, configure search
-        to find them amongst the hard-coded prefixes in the
-        following order:
-
-        . /usr
-        . /usr/local
-        . /usr/mysql
-        . /opt/mysql
-
-    --with-openssl[=check|yes|no]
-
-        Specifies whether to use the MD5 and SHA1 hashing
-        implementations of libcrypto provided by OpenSSL.
-        Uses pkg-config, thus automatic detection can be
-        overridden by the openssl_CFLAGS and openssl_LIBS
-        variables.
-
-    --with-cyrus-sasl=[CYRUS_SASL_INSTALLATION_PREFIX]
-    --with-cyrus-sasl2=[CYRUS_SASL2_INSTALLATION_PREFIX]
-
-        Specifies where the Cyrus SASL headers and libraries, which
-        will be used for MD5 calculation facility, are installed.
-        If the option is supplied but no prefix is explicitly given,
-        configure tries to search them amongst the hard-coded prefixes
-        in the following order:
-
-        . /usr
-        . /usr/local
-        . /opt/cyrus-sasl
-
-        Note that these two options cannot be specified together, and
-        it is discouraged to use this feature in order to avoid cross
-        dependency and symbol conflict as PAM may be called from within
-        a SASL client library.
-
-4. Run "make" to build the module.
-        
-5. Run "make install" as root to install the module.
-
-6. Make proper changes to an intended configuration file in /etc/pam.d/
+5. Make proper changes to an intended configuration file in /etc/pam.d/
    or /etc/pam.conf.
 
 The following are historic instructions - I haven't checked they still work.

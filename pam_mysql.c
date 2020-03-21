@@ -186,7 +186,7 @@
 void make_scrambled_password(char scrambled_password[42], const char password[255])
 {
     SHA1_CTX ctx;
-    unsigned char h0[20], h1[20];
+    char h0[20], h1[20];
 
     SHA1Init(&ctx);
     SHA1Update(&ctx, password, strlen(password));
@@ -1055,7 +1055,7 @@ static int d7_password_get_count_log2(char *setting)
  * @return char *
  *   The location of the NULL terminating the output buffer.
  */
-static char * _password_base64_encode(unsigned char *input, int count,
+static char * _password_base64_encode(char *input, int count,
                                       char *output) {
     int i = 0, off = 0;
     char *itoa64 = _password_itoa64();
@@ -1119,9 +1119,9 @@ static char *d7_hash(int use_md5, char *string1, int len1, char *string2, int le
     memcpy(combined + len1, string2, len2);
 
     if (use_md5)
-        MD5(combined, (unsigned long)len, output);
+        MD5((const unsigned char *) combined, (unsigned long)len, (unsigned char *) output);
     else
-        SHA512(combined, (unsigned long)len, output);
+        SHA512((const unsigned char *) combined, (unsigned long)len, (unsigned char *) output);
 
     xfree(combined);
     return output;
@@ -3861,7 +3861,7 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                                 size_t sha1_size;
                                 Base64Decode(row[0], &hash, &sha1_size);
                                 size_t salt_length = sha1_size - 20;
-                                unsigned char salt[salt_length];
+                                char salt[salt_length];
                                 memcpy(salt, &(hash[20]), salt_length);
 
                                 char buf[41];

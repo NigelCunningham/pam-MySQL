@@ -1,9 +1,10 @@
-#include <config.h>
+#include "config.h"
 
 #ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 
 #include <stdint.h>
 #include <string.h>
+#include <malloc.h>
 #include "crypto.h"
 #ifndef USE_SYSTEM_CRYPT_SHA1
 # include "crypto-sha1.h"
@@ -28,13 +29,13 @@
  */
 
 #ifdef HAVE_LIBSODIUM
-char *hexify(char * const result, const unsigned char *digest,
+char *hexify(char * const result, const char *digest,
 	     const size_t size_result, size_t size_digest)
 {
     return sodium_bin2hex(result, size_result, digest, size_digest);
 }
 #else
-char *hexify(char * const result, const unsigned char *digest,
+char *hexify(char * const result, const char *digest,
 	     const size_t size_result, size_t size_digest)
 {
     static const char * const hexchars = "0123456789ABCDEF";
@@ -58,7 +59,7 @@ char *hexify(char * const result, const unsigned char *digest,
 
 /* Encode a buffer to Base64 */
 
-char *base64ify(char * const b64, const unsigned char *bin,
+char *base64ify(char * const b64, const char *bin,
                 size_t b64_maxlen, size_t bin_len)
 {
 #define B64_PAD '='
@@ -103,8 +104,8 @@ char *base64ify(char * const b64, const unsigned char *bin,
 
 /* Decode a Base64 encoded string */
 
-static unsigned char *
-debase64ify(unsigned char * const bin, const char *b64,
+static char *
+debase64ify(char * const bin, const char *b64,
             size_t bin_maxlen, size_t b64_len, size_t * const bin_len_p)
 {
 #define REV64_EOT      128U
@@ -125,9 +126,9 @@ debase64ify(unsigned char * const bin, const char *b64,
         REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE, REV64_NONE
     };
     const unsigned char *b64_u = (const unsigned char *) b64;
-    unsigned char       *bin_w = bin;
-    unsigned char        mask;
-    unsigned char        t0, t1, t2, t3;
+    char       *bin_w = bin;
+    char        mask;
+    char        t0, t1, t2, t3;
     uint32_t             t;
     size_t               i;
 
@@ -137,10 +138,10 @@ debase64ify(unsigned char * const bin, const char *b64,
         return NULL;
     }
     while (i-- > 0U) {
-        t0 = rev64chars[*b64++];
-        t1 = rev64chars[*b64++];
-        t2 = rev64chars[*b64++];
-        t3 = rev64chars[*b64++];
+        t0 = rev64chars[(int) *b64++];
+        t1 = rev64chars[(int) *b64++];
+        t2 = rev64chars[(int) *b64++];
+        t3 = rev64chars[(int) *b64++];
         t = ((uint32_t) t3) | ((uint32_t) t2 << 6) |
             ((uint32_t) t1 << 12) | ((uint32_t) t0 << 18);
         mask = t0 | t1 | t2 | t3;
@@ -174,12 +175,12 @@ debase64ify(unsigned char * const bin, const char *b64,
 char *crypto_hash_sha1(const char *string, const int hex)
 {
     SHA1_CTX ctx;
-    unsigned char digest[20];
+    char digest[20];
     static char result[41];
 
     SHA1Init(&ctx);
     if (string != NULL && *string != 0) {
-        SHA1Update(&ctx, (const unsigned char *) string, strlen(string));
+        SHA1Update(&ctx, string, strlen(string));
     }
     SHA1Final(digest, &ctx);
 
@@ -195,7 +196,7 @@ char *crypto_hash_sha1(const char *string, const int hex)
 char *crypto_hash_md5(const char *string, const int hex)
 {
     MD5_CTX ctx;
-    unsigned char digest[16];
+    char digest[16];
     static char result[33];
 
     MD5Init(&ctx);
@@ -217,7 +218,7 @@ char *crypto_hash_ssha1(const char *string, const char *stored)
 {
     SHA1_CTX ctx;
     const char *salt;
-    unsigned char digest[20];
+    char digest[20];
     size_t decoded_len;
     char *hash_and_salt;
     size_t sizeof_hash_and_salt;
@@ -234,10 +235,10 @@ char *crypto_hash_ssha1(const char *string, const char *stored)
     decoded_len -= sizeof digest;
     SHA1Init(&ctx);
     if (string != NULL && *string != 0) {
-        SHA1Update(&ctx, (const unsigned char *) string, strlen(string));
+        SHA1Update(&ctx, string, strlen(string));
     }
     if (decoded_len > (size_t) 0U) {
-        SHA1Update(&ctx, (const unsigned char *) salt, decoded_len);
+        SHA1Update(&ctx, salt, decoded_len);
     }
     SHA1Final(digest, &ctx);
     sizeof_hash_and_salt = sizeof digest + decoded_len;
@@ -246,7 +247,7 @@ char *crypto_hash_ssha1(const char *string, const char *stored)
     }
     memcpy(hash_and_salt, digest, sizeof digest);   /* no possible overflow */
     memcpy(hash_and_salt + sizeof digest, salt, decoded_len);   /* no possible overflow */
-    if (base64ify(decoded, (const unsigned char *) hash_and_salt,
+    if (base64ify(decoded, (const char *) hash_and_salt,
                   sizeof decoded, sizeof_hash_and_salt) == NULL) {
         free(hash_and_salt);
         return NULL;
@@ -262,7 +263,7 @@ char *crypto_hash_smd5(const char *string, const char *stored)
 {
     MD5_CTX ctx;
     const char *salt;
-    unsigned char digest[20];
+    char digest[20];
     size_t decoded_len;
     char *hash_and_salt;
     size_t sizeof_hash_and_salt;
@@ -291,7 +292,7 @@ char *crypto_hash_smd5(const char *string, const char *stored)
     }
     memcpy(hash_and_salt, digest, sizeof digest);   /* no possible overflow */
     memcpy(hash_and_salt + sizeof digest, salt, decoded_len);   /* no possible overflow */
-    if (base64ify(decoded, (const unsigned char *) hash_and_salt,
+    if (base64ify(decoded, (const char *) hash_and_salt,
                   sizeof decoded, sizeof_hash_and_salt) == NULL) {
         free(hash_and_salt);
         return NULL;

@@ -10,11 +10,11 @@
 typedef struct {
     crypto_uint4    state[5];
     crypto_uint4    count[2];
-    unsigned char   buffer[64];
+    char            buffer[64];
 } SHA1_CTX;
 
 void SHA1Init(SHA1_CTX * context);
-void SHA1Update(SHA1_CTX * context, const unsigned char * data, size_t len);
-void SHA1Final(unsigned char digest[20], SHA1_CTX * context);
+void SHA1Update(SHA1_CTX * context, const char * data, size_t len);
+void SHA1Final(char digest[20], SHA1_CTX * context);
 
 #endif

@@ -12,7 +12,7 @@
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
 
@@ -53,7 +53,7 @@
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
 static void SHA1Transform(crypto_uint4 state[5],
-                          const unsigned char buffer[64])
+                          const char buffer[64])
 {
     crypto_uint4 a, b, c, d, e;
     typedef union {
@@ -181,7 +181,7 @@ void SHA1Init(SHA1_CTX * context)
 
 /* Run your data through this. */
 
-void SHA1Update(SHA1_CTX * context, const unsigned char *data,
+void SHA1Update(SHA1_CTX * context, const char *data,
                 size_t len)
 {
     size_t i;
@@ -206,18 +206,18 @@ void SHA1Update(SHA1_CTX * context, const unsigned char *data,
 
 /* Add padding and return the message digest. */
 
-void SHA1Final(unsigned char digest[20], SHA1_CTX * context)
+void SHA1Final(char digest[20], SHA1_CTX * context)
 {
     size_t i;
-    unsigned char finalcount[8];
+    char finalcount[8];
 
     for (i = 0; i < 8; i++) {
         finalcount[i] = (unsigned char) ((context->count[(i >= 4 ? 0 : 1)]
                                           >> ((3 - (i & 3)) * 8)) & 255);       /* Endian independent */
     }
-    SHA1Update(context, (const unsigned char *) "\200", 1);
+    SHA1Update(context, "\200", 1);
     while ((context->count[0] & 504) != 448) {
-        SHA1Update(context, (const unsigned char *) "\0", 1);
+        SHA1Update(context, "\0", 1);
     }
     SHA1Update(context, finalcount, 8); /* Should cause a SHA1Transform() */
 

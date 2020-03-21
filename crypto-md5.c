@@ -23,10 +23,9 @@ These notices must be retained in any copies of any part of this
 documentation and/or software.
  */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef HAVE_MAKE_SCRAMBLED_PASSWORD
-
 #include <string.h>
 #include "crypto.h"
 #include "crypto-md5.h"
@@ -163,7 +162,7 @@ void MD5Update(MD5_CTX * context, const unsigned char *input,
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
   the message digest and zeroizing the context.
  */
-void MD5Final(unsigned char digest[16], MD5_CTX * context)
+void MD5Final(char digest[16], MD5_CTX * context)
 {
     unsigned char bits[8];
     size_t index, padLen;
