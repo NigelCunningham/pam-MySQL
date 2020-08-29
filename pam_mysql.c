@@ -3754,12 +3754,20 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                                 char buf[42];
 #ifdef HAVE_MAKE_SCRAMBLED_PASSWORD_323
                                 if (ctx->use_323_passwd) {
+                                    syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "use_323_passwd defined and enabled in pam_mysql_check_passwd");
                                     make_scrambled_password_323(buf, passwd);
                                 } else {
+                                    syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "use_323_passwd defined and not enabled in pam_mysql_check_passwd");
                                     make_scrambled_password(buf, passwd);
                                 }
 #else
-                                make_scrambled_password(buf, passwd);
+                                if (ctx->use_323_passwd) {
+                                    syslog(LOG_WARNING, PAM_MYSQL_LOG_PREFIX "Workaround applied. use_323_passwd not defined but use attempted in pam_mysql_check_passwd");
+                                    compat_make_scrambled_password_323(buf, passwd);
+                                } else {
+                                    syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "use_323_passwd not defined and use not attempted in pam_mysql_check_passwd");
+                                    make_scrambled_password(buf, passwd);
+                                }
 #endif
 
                                 vresult = strcmp(row[0], buf);
@@ -4120,12 +4128,20 @@ static pam_mysql_err_t pam_mysql_update_passwd(pam_mysql_ctx_t *ctx, const char 
                     }
 #ifdef HAVE_MAKE_SCRAMBLED_PASSWORD_323
                     if (ctx->use_323_passwd) {
+                        syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "use_323_passwd defined and enabled in pam_mysql_update_passwd");
                         make_scrambled_password_323(encrypted_passwd, new_passwd);
                     } else {
+                        syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "use_323_passwd defined and not enabled in pam_mysql_update_passwd");
                         make_scrambled_password(encrypted_passwd, new_passwd);
                     }
 #else
-                    make_scrambled_password(encrypted_passwd, new_passwd);
+                    if (ctx->use_323_passwd) {
+                        syslog(LOG_WARNING, PAM_MYSQL_LOG_PREFIX "Workaround applied. use_323_passwd not defined but use attempted in pam_mysql_update_passwd");
+                        compat_make_scrambled_password_323(encrypted_passwd, new_passwd);
+                    } else {
+                        syslog(LOG_DEBUG, PAM_MYSQL_LOG_PREFIX "use_323_passwd not defined and use not attempted in pam_mysql_update_passwd");
+                        make_scrambled_password(encrypted_passwd, new_passwd);
+                    }
 #endif
                     break;
 

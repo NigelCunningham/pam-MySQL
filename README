@@ -167,6 +167,11 @@ use_323_passwd (false)
 
     This option appeared since 0.7pre2 and 0.6.1.
 
+    Note that the code for this to work has been dropped from client libraries
+    for mysql 5.x (or so) onwards, so a workaround has been patched in to
+    pam-mysql. If at all possible you should upgrade your password encryption
+    method instead and not rely on this feature.
+
 where
 
     Additional criteria for the query. For example:
