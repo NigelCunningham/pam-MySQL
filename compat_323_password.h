@@ -58,7 +58,8 @@
            // this three steps are done in check_scramble()
 
 *****************************************************************************/
-
+#include <string.h>
+#include <stdio.h>
 
 /*
     Generate binary hash from raw text string 
@@ -70,22 +71,22 @@
     password_len IN  password length (password may be not null-terminated)
 */
 
-void compat_323_hash_password(ulong *result, const char *password, uint password_len)
+void compat_323_hash_password(unsigned long *result, const char *password, unsigned int password_len)
 {
-  register ulong nr=1345345333L, add=7, nr2=0x12345671L;
-  ulong tmp;
+  register unsigned long nr=1345345333L, add=7, nr2=0x12345671L;
+  unsigned long tmp;
   const char *password_end= password + password_len;
   for (; password < password_end; password++)
   {
     if (*password == ' ' || *password == '\t')
       continue;                                 /* skip space in password */
-    tmp= (ulong) (unsigned char) *password;
+    tmp= (unsigned long) (unsigned char) *password;
     nr^= (((nr & 63)+add)*tmp)+ (nr << 8);
     nr2+=(nr2 << 8) ^ nr;
     add+=tmp;
   }
-  result[0]=nr & (((ulong) 1L << 31) -1L); /* Don't use sign bit (str2int) */;
-  result[1]=nr2 & (((ulong) 1L << 31) -1L);
+  result[0]=nr & (((unsigned long) 1L << 31) -1L); /* Don't use sign bit (str2int) */;
+  result[1]=nr2 & (((unsigned long) 1L << 31) -1L);
 }
 
 
@@ -100,7 +101,7 @@ void compat_323_hash_password(ulong *result, const char *password, uint password
 
 void compat_make_scrambled_password_323(char *to, const char *password)
 {
-  ulong hash_res[2];
-  compat_323_hash_password(hash_res, password, (uint) strlen(password));
+  unsigned long hash_res[2];
+  compat_323_hash_password(hash_res, password, (unsigned int) strlen(password));
   sprintf(to, "%08lx%08lx", hash_res[0], hash_res[1]);
 }

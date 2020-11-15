@@ -137,6 +137,8 @@
 #include <assert.h>
 #endif
 
+#include "compat_323_password.h"
+
 #ifdef HAVE_MYSQL_H
 #include <mysql.h>
 #endif
