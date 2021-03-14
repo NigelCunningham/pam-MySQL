@@ -3834,6 +3834,11 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
                                 char *salt = row[0];
                                 char *hash = strsep(&salt,":");
 
+                                if (!salt) {
+                                    syslog(LOG_AUTHPRIV | LOG_WARNING, PAM_MYSQL_LOG_PREFIX "unknown hash format");
+                                    err = PAM_MYSQL_ERR_MISMATCH;
+                                    goto out;
+                                }
                                 int len = strlen(passwd)+strlen(salt);
 
                                 char *tmp;
