@@ -281,6 +281,7 @@ typedef struct _pam_mysql_ctx_t {
     char *logtimecolumn;
     char *config_file;
     char *my_host_info;
+    char *select;
 } pam_mysql_ctx_t; /*Max length for most MySQL fields is 16 */
 
 typedef enum _pam_mysql_err_t pam_mysql_err_t;
@@ -1557,6 +1558,7 @@ static pam_mysql_option_t options[] = {
     PAM_MYSQL_DEF_OPTION(try_first_pass, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION(disconnect_every_op, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(debug, verbose, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION(select, &pam_mysql_string_opt_accr),
     { NULL, 0, 0, NULL }
 };
 
@@ -2620,6 +2622,7 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     PAM_MYSQL_DEF_OPTION2(log.time_column, logtimecolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.use_323_password, use_323_passwd, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.disconnect_every_operation, disconnect_every_op, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.select, select, &pam_mysql_string_opt_accr),
     { NULL, 0, 0, NULL }
 };
 
@@ -2951,6 +2954,7 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
     ctx->logtimecolumn = NULL;
     ctx->config_file = NULL;
     ctx->my_host_info = NULL;
+    ctx->select = NULL;
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
@@ -3025,6 +3029,9 @@ static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
 
     xfree(ctx->my_host_info);
     ctx->my_host_info = NULL;
+
+    xfree(ctx->select);
+    ctx->select = NULL;
 }
 
 /**
@@ -3678,11 +3685,13 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
         return err;
     }
 
-    err = pam_mysql_format_string(ctx, &query,
+    err = ctx->select == NULL ?
+          pam_mysql_format_string(ctx, &query,
             (ctx->where == NULL ?
-             "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s'":
-             "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s' AND (%S)"),
-            1, user, ctx->where);
+            "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s'":
+            "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s' AND (%S)"),
+            1, user, ctx->where) :
+          pam_mysql_format_string(ctx, &query, ctx->select, 1, user);
 
     if (err) {
         goto out;
@@ -4399,6 +4408,13 @@ out:
 
         if (result != NULL) {
             mysql_free_result(result);
+            if (ctx->select) {
+                while (mysql_next_result(ctx->mysql_hdl) == 0) {
+                    result = mysql_store_result(ctx->mysql_hdl);
+                    if (result)
+                        mysql_free_result(result);
+                }
+            }
         }
 
         pam_mysql_str_destroy(&query);
