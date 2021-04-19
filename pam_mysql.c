@@ -281,6 +281,12 @@ typedef struct _pam_mysql_ctx_t {
     char *logtimecolumn;
     char *config_file;
     char *my_host_info;
+    char *ssl_mode;
+    char *ssl_cert;
+    char *ssl_key;
+    char *ssl_ca;
+    char *ssl_capath;
+    char *ssl_cipher;
 } pam_mysql_ctx_t; /*Max length for most MySQL fields is 16 */
 
 typedef enum _pam_mysql_err_t pam_mysql_err_t;
@@ -1557,6 +1563,12 @@ static pam_mysql_option_t options[] = {
     PAM_MYSQL_DEF_OPTION(try_first_pass, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION(disconnect_every_op, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(debug, verbose, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION(ssl_mode, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION(ssl_cert, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION(ssl_key, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION(ssl_ca, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION(ssl_capath, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION(ssl_cipher, &pam_mysql_string_opt_accr),
     { NULL, 0, 0, NULL }
 };
 
@@ -2620,6 +2632,12 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     PAM_MYSQL_DEF_OPTION2(log.time_column, logtimecolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.use_323_password, use_323_passwd, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.disconnect_every_operation, disconnect_every_op, &pam_mysql_boolean_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.ssl_mode, ssl_mode, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.ssl_cert, ssl_cert, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.ssl_key, ssl_key, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.ssl_ca, ssl_ca, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.ssl_capath, ssl_capath, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.ssl_cipher, ssl_cipher, &pam_mysql_string_opt_accr),
     { NULL, 0, 0, NULL }
 };
 
@@ -2951,6 +2969,12 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
     ctx->logtimecolumn = NULL;
     ctx->config_file = NULL;
     ctx->my_host_info = NULL;
+    ctx->ssl_mode = NULL;
+    ctx->ssl_cert = NULL;
+    ctx->ssl_key = NULL;
+    ctx->ssl_ca = NULL;
+    ctx->ssl_capath = NULL;
+    ctx->ssl_cipher = NULL;
 
     return PAM_MYSQL_ERR_SUCCESS;
 }
@@ -3025,6 +3049,24 @@ static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
 
     xfree(ctx->my_host_info);
     ctx->my_host_info = NULL;
+
+    xfree(ctx->ssl_mode);
+    ctx->ssl_mode = NULL;
+
+    xfree(ctx->ssl_cert);
+    ctx->ssl_cert = NULL;
+
+    xfree(ctx->ssl_key);
+    ctx->ssl_key = NULL;
+
+    xfree(ctx->ssl_ca);
+    ctx->ssl_ca = NULL;
+
+    xfree(ctx->ssl_capath);
+    ctx->ssl_capath = NULL;
+
+    xfree(ctx->ssl_cipher);
+    ctx->ssl_cipher = NULL;
 }
 
 /**
@@ -3348,6 +3390,50 @@ static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *ctx)
     if (NULL == mysql_init(ctx->mysql_hdl)) {
         err = PAM_MYSQL_ERR_ALLOC;
         goto out;
+    }
+
+    if (ctx->ssl_cert != NULL || ctx->ssl_key != NULL ||
+        ctx->ssl_ca != NULL || ctx->ssl_capath != NULL || ctx->ssl_cipher != NULL) {
+        mysql_ssl_set(ctx->mysql_hdl, ctx->ssl_key, ctx->ssl_cert,
+                      ctx->ssl_ca, ctx->ssl_capath, ctx->ssl_cipher);
+    }
+
+    if (ctx->ssl_mode != NULL) {
+#ifdef MARIADB_BASE_VERSION
+        my_bool enable = 1;
+        if (strcasecmp(ctx->ssl_mode, "required") == 0 ||
+            strcasecmp(ctx->ssl_mode, "enforce")) {
+            if (mysql_optionsv(ctx->mysql_hdl, MYSQL_OPT_SSL_ENFORCE,
+                               (void *)&enable) != 0) {
+                err = PAM_MYSQL_ERR_DB;
+                goto out;
+            }
+        } else if (strcasecmp(ctx->ssl_mode, "verify_identity") == 0) {
+            if (mysql_optionsv(ctx->mysql_hdl, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+                               (void *)&enable) != 0) {
+                err = PAM_MYSQL_ERR_DB;
+                goto out;
+            }
+        }
+#else
+        int ssl_mode = SSL_MODE_PREFERRED;
+        if (strcasecmp(ctx->ssl_mode, "disabled") == 0) {
+            ssl_mode = SSL_MODE_DISABLED;
+        } else if (strcasecmp(ctx->ssl_mode, "preferred") == 0) {
+            ssl_mode = SSL_MODE_PREFERRED;
+        } else if (strcasecmp(ctx->ssl_mode, "required") == 0 ||
+                   strcasecmp(ctx->ssl_mode, "enforced")) {
+            ssl_mode = SSL_MODE_REQUIRED;
+        } else if (strcasecmp(ctx->ssl_mode, "verify_ca") == 0) {
+            ssl_mode = SSL_MODE_VERIFY_CA;
+        } else if (strcasecmp(ctx->ssl_mode, "verify_identity") == 0) {
+            ssl_mode = SSL_MODE_VERIFY_IDENTITY;
+        }
+        if (mysql_options(ctx->mysql_hdl, MYSQL_OPT_SSL_MODE, ssl_mode) != 0) {
+            err = PAM_MYSQL_ERR_DB;
+            goto out;
+        }
+#endif
     }
 
     if (NULL == mysql_real_connect(ctx->mysql_hdl, host,
