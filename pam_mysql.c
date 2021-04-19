@@ -260,6 +260,7 @@ typedef struct _pam_mysql_ctx_t {
     char *usercolumn;
     char *passwdcolumn;
     char *statcolumn;
+    char *select;
     int crypt_type;
     int use_323_passwd;
     int md5;
@@ -1536,6 +1537,7 @@ static pam_mysql_option_t options[] = {
     PAM_MYSQL_DEF_OPTION(usercolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION(passwdcolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION(statcolumn, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION(select, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(crypt, crypt_type, &pam_mysql_crypt_opt_accr),
     PAM_MYSQL_DEF_OPTION(md5, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION(sha256, &pam_mysql_boolean_opt_accr),
@@ -2603,6 +2605,7 @@ static pam_mysql_option_t pam_mysql_entry_handler_options[] = {
     PAM_MYSQL_DEF_OPTION2(users.user_column, usercolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.password_column, passwdcolumn, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.status_column, statcolumn, &pam_mysql_string_opt_accr),
+    PAM_MYSQL_DEF_OPTION2(users.select, select, &pam_mysql_string_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.password_crypt, crypt_type, &pam_mysql_crypt_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.use_md5, md5, &pam_mysql_boolean_opt_accr),
     PAM_MYSQL_DEF_OPTION2(users.use_sha256, sha256, &pam_mysql_boolean_opt_accr),
@@ -2930,6 +2933,7 @@ static pam_mysql_err_t pam_mysql_init_ctx(pam_mysql_ctx_t *ctx)
     ctx->usercolumn = NULL;
     ctx->passwdcolumn = NULL;
     ctx->statcolumn = xstrdup("0");
+    ctx->select = NULL;
     ctx->crypt_type = 0;
     ctx->use_323_passwd = 0;
     ctx->md5 = 0;
@@ -2998,6 +3002,9 @@ static void pam_mysql_destroy_ctx(pam_mysql_ctx_t *ctx)
 
     xfree(ctx->statcolumn);
     ctx->statcolumn = NULL;
+
+    xfree(ctx->select);
+    ctx->select = NULL;
 
     xfree(ctx->logtable);
     ctx->logtable = NULL;
@@ -3352,7 +3359,7 @@ static pam_mysql_err_t pam_mysql_open_db(pam_mysql_ctx_t *ctx)
 
     if (NULL == mysql_real_connect(ctx->mysql_hdl, host,
                 ctx->user, (ctx->passwd == NULL ? "": ctx->passwd),
-                ctx->db, port, socket, 0)) {
+                ctx->db, port, socket, ctx->select != NULL ? CLIENT_MULTI_RESULTS : 0)) {
         err = PAM_MYSQL_ERR_DB;
         goto out;
     }
@@ -3678,11 +3685,13 @@ static pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
         return err;
     }
 
-    err = pam_mysql_format_string(ctx, &query,
+    err = ctx->select == NULL ?
+          pam_mysql_format_string(ctx, &query,
             (ctx->where == NULL ?
-             "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s'":
-             "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s' AND (%S)"),
-            1, user, ctx->where);
+            "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s'":
+            "SELECT %[passwdcolumn] FROM %[table] WHERE %[usercolumn] = '%s' AND (%S)"),
+            1, user, ctx->where) :
+          pam_mysql_format_string(ctx, &query, ctx->select, 1, user);
 
     if (err) {
         goto out;
@@ -3943,6 +3952,13 @@ out:
 
         if (result != NULL) {
             mysql_free_result(result);
+            if (ctx->select) {
+                while (mysql_next_result(ctx->mysql_hdl) == 0) {
+                    result = mysql_store_result(ctx->mysql_hdl);
+                    if (result)
+                        mysql_free_result(result);
+                }
+            }
         }
 
         pam_mysql_str_destroy(&query);
