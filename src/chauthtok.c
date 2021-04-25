@@ -8,6 +8,7 @@
 #include "logging.h"
 #include "authenticate.h"
 #include "password.h"
+#include "pam_calls.h"
 
 /**
  * Update the password in MySQL.
