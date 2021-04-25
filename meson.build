@@ -236,7 +236,7 @@ configuration_inc = include_directories('.')
 
 add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
 
-buildtarget = library('pam_mysql', [
+buildtarget = shared_library('pam_mysql', [
   'src/pam_mysql.c',
   'src/session.c',
   'src/args.c',
@@ -267,7 +267,9 @@ buildtarget = library('pam_mysql', [
   'src/password.c',
   'src/md5.c',
   'src/pam_calls.c',
-], dependencies: deps, install: true, include_directories: configuration_inc)
+], dependencies: deps, install: true, include_directories: configuration_inc, install_dir: '/lib/security')
+
+meson.add_install_script('install.sh')
 
 test_acct_mgmt = executable('test_acct_mgmt',
   sources: [
