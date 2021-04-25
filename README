@@ -33,11 +33,10 @@ Installation
 
 1. You will need build dependencies installed see below for OS specific instructions in addition to the following general sequence.
 2. Install the meson build system, if you don't already have it. http://mesonbuild.com/.
-3. Make a directory for the output files, eg: mkdir ../pam-MySQL-build. You can use a subdirectory of the source tree.
-4. From the source tree, run meson ../pam-MySQL-build
-5. Switch to the build directory and run ninja to perform the actual build.
-6. You can also run unit tests: meson test
-7. Install by running ninja install.
+3. From the source tree, run meson ../pam-MySQL-build. The directory will be created by meson.
+4. Switch to the build directory and run ninja to perform the actual build.
+5. You can also run unit tests: meson test
+6. Install by running ninja install.
 
 All in one line, using a subdirectory:
 
