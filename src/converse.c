@@ -2,6 +2,7 @@
 #include "logging.h"
 #include "alloc.h"
 #include "strings.h"
+#include "pam_calls.h"
 
 /**
  * Have a conversation with an application via PAM.
@@ -40,7 +41,7 @@ pam_mysql_err_t pam_mysql_converse(pam_mysql_ctx_t *ctx, char ***pretval,
   va_start(ap, nargs);
 
   /* obtain conversation interface */
-  if ((perr = pam_get_item(pamh, PAM_CONV,
+  if ((perr = pam_mysql_get_item(pamh, PAM_CONV,
           (PAM_GET_ITEM_CONST void **)&conv))) {
     pam_mysql_syslog(LOG_AUTHPRIV | LOG_ERR,
         "could not obtain coversation interface (reason: %s)", pam_strerror(pamh, perr));

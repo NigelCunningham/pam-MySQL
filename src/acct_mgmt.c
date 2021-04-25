@@ -4,6 +4,7 @@
 #include "mysql.h"
 #include "configuration.h"
 #include "converse.h"
+#include "pam_calls.h"
 
 /**
  * Detemine whether a username is known.
@@ -184,7 +185,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags, int argc,
     goto out;
   }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
+  switch (pam_mysql_get_item(pamh, PAM_RHOST,
         (PAM_GET_ITEM_CONST void **)&rhost)) {
     case PAM_SUCCESS:
       break;

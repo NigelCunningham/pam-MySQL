@@ -305,7 +305,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
     goto out;
   }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
+  switch (pam_mysql_get_item(pamh, PAM_RHOST,
         (PAM_GET_ITEM_CONST void **)&rhost)) {
     case PAM_SUCCESS:
       break;
@@ -405,7 +405,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
   if (!(caps & PAM_MYSQL_CAP_CHAUTHTOK_OTHERS) &&
       !(stat & PAM_MYSQL_USER_STAT_NULL_PASSWD)) {
     if (ctx->use_first_pass || ctx->try_first_pass) {
-      retval = pam_get_item(pamh, PAM_OLDAUTHTOK,
+      retval = pam_mysql_get_item(pamh, PAM_OLDAUTHTOK,
           (PAM_GET_ITEM_CONST void **)&old_passwd);
       switch (retval) {
         case PAM_SUCCESS:
@@ -505,7 +505,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh,int flags,int argc,
     }
   }
 
-  retval = pam_get_item(pamh, PAM_AUTHTOK,
+  retval = pam_mysql_get_item(pamh, PAM_AUTHTOK,
       (PAM_GET_ITEM_CONST void **)&new_passwd);
 
   switch (retval) {

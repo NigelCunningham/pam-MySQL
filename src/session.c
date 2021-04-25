@@ -8,6 +8,7 @@
 #include "mysql.h"
 #include "args.h"
 #include "configuration.h"
+#include "pam_calls.h"
 
 int pam_mysql_initialise(pam_mysql_ctx_t *ctx, pam_handle_t *pamh, int argc,
     const char **argv) {
@@ -69,7 +70,7 @@ int pam_mysql_initialise(pam_mysql_ctx_t *ctx, pam_handle_t *pamh, int argc,
     goto out;
   }
 
-  switch (pam_get_item(pamh, PAM_RHOST,
+  switch (pam_mysql_get_item(pamh, PAM_RHOST,
         (PAM_GET_ITEM_CONST void **)&rhost)) {
     case PAM_SUCCESS:
       break;

@@ -245,7 +245,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
   }
 
   if (ctx->use_first_pass || ctx->try_first_pass) {
-    retval = pam_get_item(pamh, PAM_AUTHTOK,
+    retval = pam_mysql_get_item(pamh, PAM_AUTHTOK,
         (PAM_GET_ITEM_CONST void **)&passwd);
 
     switch (retval) {
