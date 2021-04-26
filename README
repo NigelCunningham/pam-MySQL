@@ -6,8 +6,8 @@ https://sourceforge.net/projects/pam-mysql/
 Now taken care of by Nigel Cunningham at
 https://github.com/NigelCunningham/pam-MySQL
 
-pam-MySQL 1.0.0-alpha2
-======================
+pam-MySQL 1.0.0-beta1
+=====================
 
 This is the source code for pam-MySQL, released under the GPL v2 or later.
 
@@ -24,12 +24,15 @@ recommend using this release in a production system. Let's bed it down first.
 
 Thanks and I hope this effort serves you well!
 
-Nigel Cunningham 25 April 2021
+Nigel Cunningham 26 April 2021
 
 SDG!
 
 Installation
 ============
+
+pam-MySQL requires the following minimum versions:
+- Meson 0.56
 
 1. You will need build dependencies installed see below for OS specific instructions in addition to the following general sequence.
 2. Install the meson build system, if you don't already have it. http://mesonbuild.com/.
@@ -42,27 +45,26 @@ All in one line, using a subdirectory:
 
 mkdir build && meson build && (cd build; ninja && meson test && ninja install)
 
+The 1.0 release of pam-MySQL has been tested with:
+
+- ArchLinux
+- Linux Mint 20.1
+- Centos 8
+
 
 OS Specific Instructions
 ------------------------
-
-(Need verification / correction after the switch to Meson)
 
 * Ubuntu:
 
   (Modified from https://github.com/NigelCunningham/pam-MySQL/issues/28):
     apt install -y build-essential libpam-dev libssl-dev mysql-server meson libmariadbclient-dev libmariadb-dev-compat gcc-10
 
-* CentOS 7:
+* CentOS 8:
 
-   yum install meson gcc mariadb-devel pam-devel
-
-   If you use the MariaDB repository, you might need to also install
-   the MariaDB-shared package, otherwise you get a cryptic
-     "configure: error: unable to find the crypt() function"
-   error. (see https://github.com/NigelCunningham/pam-MySQL/issues/42 )
-
-
+   yum install gcc mariadb-devel pam-devel mysql.x86_64 python3
+   yum install gcc python3 git mariadb-devel pam-devel
+   pip3 install meson ninja
 
 
 The following is the original (and still valid) readme.
