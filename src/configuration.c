@@ -900,7 +900,7 @@ static pam_mysql_err_t pam_mysql_config_scanner_next_token(
           return err;
         }
       }
-      [[fallthrough]];
+      /* fall through */
 
     case 1:
       if ((err = pam_mysql_stream_skip_spn(scanner->stream,
