@@ -4,22 +4,6 @@
 #include "logging.h"
 #include "stream.h"
 
-typedef int(*pam_mysql_option_getter_t)(void *val, const char **pretval, int *to_release);
-
-typedef int(*pam_mysql_option_setter_t)(void *val, const char *newval_str);
-
-typedef struct _pam_mysql_option_accessor_t {
-  pam_mysql_option_getter_t get_op;
-  pam_mysql_option_setter_t set_op;
-} pam_mysql_option_accessor_t;
-
-typedef struct _pam_mysql_option_t {
-  const char *name;
-  size_t name_len;
-  size_t offset;
-  pam_mysql_option_accessor_t *accessor;
-} pam_mysql_option_t;
-
 struct _pam_mysql_entry_handler_t;
 
 typedef pam_mysql_err_t (*pam_mysql_handle_entry_fn_t)(
@@ -349,6 +333,16 @@ static pam_mysql_option_t options[] = {
   PAM_MYSQL_DEF_OPTION(ssl_cipher, &pam_mysql_string_opt_accr),
   { NULL, 0, 0, NULL }
 };
+
+/**
+ * Make options available to tests.
+ *
+ * @return pam_mysql_option_t[]
+ *   The list of options.
+ */
+pam_mysql_option_t* pam_mysql_get_options(void) {
+  return options;
+}
 
 /**
  * Find an option with the specified name.

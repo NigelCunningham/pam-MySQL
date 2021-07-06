@@ -1,0 +1,2 @@
+auth required pam_mysql.so user=mock_user passwd=first_pass host=localhost db=mock_db table=users usercolumn=userid passwdcolumn=passwd crypt=1
+account sufficient pam_mysql.so user=mock_user passwd=first_pass host=localhost db=mock_db table=users usercolumn=userid passwdcolumn=passwd crypt=1

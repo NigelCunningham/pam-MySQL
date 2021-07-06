@@ -22,3 +22,26 @@ extern pam_mysql_err_t pam_mysql_set_option(pam_mysql_ctx_t *ctx, const char *na
 extern pam_mysql_err_t pam_mysql_format_string(pam_mysql_ctx_t *ctx,
     pam_mysql_str_t *pretval, const char *template, int mangle, ...);
 
+typedef int(*pam_mysql_option_getter_t)(void *val, const char **pretval, int *to_release);
+
+typedef int(*pam_mysql_option_setter_t)(void *val, const char *newval_str);
+
+/* Here to enable testing */
+
+typedef struct _pam_mysql_option_accessor_t {
+  pam_mysql_option_getter_t get_op;
+  pam_mysql_option_setter_t set_op;
+} pam_mysql_option_accessor_t;
+
+typedef struct _pam_mysql_option_t {
+  const char *name;
+  size_t name_len;
+  size_t offset;
+  pam_mysql_option_accessor_t *accessor;
+} pam_mysql_option_t;
+
+extern pam_mysql_option_t* pam_mysql_get_options();
+
+extern pam_mysql_option_t *pam_mysql_find_option(pam_mysql_option_t *options,
+    const char *name, size_t name_len);
+

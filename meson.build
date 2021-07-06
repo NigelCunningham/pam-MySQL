@@ -295,6 +295,80 @@ test_acct_mgmt = executable('test_acct_mgmt',
 # test('mysql format alloc failure', test_acct_mgmt, args: ['mysql format alloc failure'])
 # test('mysql format - no extra where', test_acct_mgmt, args: ['mysql format - no extra where'])
 
+test_config_file = executable('test_config_file',
+  sources: [
+    'mocks/logging.c',
+    'mocks/converse.c' ,
+    'mocks/mysql.c' ,
+    'mocks/context.c',
+    'tests/config_file.c',
+    'tests/pam_calls.c',
+    'src/session.c',
+    'src/args.c',
+    'src/alloc.c',
+    'src/strings.c',
+    'src/configuration.c',
+    'src/stream.c',
+    'src/authenticate.c',
+    'src/crypto.c',
+    'src/crypto-sha1.c',
+    'src/crypto-md5.c',
+    'src/acct_mgmt.c',
+    'src/chauthtok.c' ,
+    'src/password_plain.c',
+    'src/password_323.c',
+    'src/password_crypt.c',
+    'src/password_md5.c',
+    'src/password_sha1.c',
+    'src/password_drupal7.c',
+    'src/password_joomla15.c',
+    'src/password_ssha.c',
+    'src/password_sha512.c',
+    'src/password_sha256.c',
+    'src/password.c',
+    'src/md5.c',
+    ],
+  dependencies: deps,
+  c_args : '-DTEST',
+  include_directories: configuration_inc,
+  build_by_default: false,
+  )
+
+test('config file - local', test_config_file, args: ['../tests/config_file', 'host', 'pukeko'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'db', 'totara'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'user', 'kiwi'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'passwd', 'my_secret'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'where', 'foo="bar"'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'table', 'users'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'update_table', 'update_table'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'usercolumn', 'user'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'passwdcolumn', 'pwd'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'statcolumn', 'status'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'select', 'select'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'crypt', 'Y'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'md5', 'false'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'sha256', 'true'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'sha512', 'true'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'blowfish', 'true'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'rounds', '2'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'disconnect_every_op', 'true'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'verbose', 'false'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'sqllog', 'false'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'logtable', 'logtable'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'logmsgcolumn', 'logmsgcolumn'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'logpidcolumn', 'logpidcolumn'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'logusercolumn', 'logusercolumn'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'loghostcolumn', 'loghostcolumn'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'logrhostcolumn', 'logrhostcolumn'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'logtimecolumn', 'logtimecolumn'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'use_323_passwd', 'false'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'ssl_mode', '1'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'ssl_cert', '/path/to/cert'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'ssl_key', '/path/to/key'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'ssl_ca', 'ca'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'ssl_capath', '/path/to'])
+test('config file - local', test_config_file, args: ['../tests/config_file', 'ssl_cipher', 'cipher'])
+
 test_authenticate = executable('test_authenticate',
   sources: [
     'mocks/logging.c',
