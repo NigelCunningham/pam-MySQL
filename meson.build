@@ -267,7 +267,7 @@ buildtarget = shared_library('pam_mysql', [
   'src/password.c',
   'src/md5.c',
   'src/pam_calls.c',
-], dependencies: deps, install: true, include_directories: configuration_inc, install_dir: '/lib/security')
+], dependencies: deps, install: true, include_directories: configuration_inc, install_dir: join_paths(get_option('libdir'), 'security'))
 
 meson.add_install_script('install.sh')
 
