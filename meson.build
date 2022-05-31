@@ -267,7 +267,7 @@ buildtarget = shared_library('pam_mysql', [
   'src/password.c',
   'src/md5.c',
   'src/pam_calls.c',
-], dependencies: deps, install: true, include_directories: configuration_inc, name_prefix: '', install_dir: '/lib/security')
+], dependencies: deps, install: true, include_directories: configuration_inc, name_prefix: '', install_dir: join_paths(get_option('libdir'), 'security'))
 
 test_acct_mgmt = executable('test_acct_mgmt',
   sources: [
