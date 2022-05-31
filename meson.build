@@ -23,13 +23,13 @@ prefix = get_option('prefix')
 
 mysql_config = find_program('mysql_config')
 
-mysql_includes_prefixed = run_command([mysql_config, '--include']).stdout().split()
+mysql_includes_prefixed = run_command(mysql_config, '--include', check: true).stdout().split()
 mysql_includes = []
 foreach i : mysql_includes_prefixed
   mysql_includes += i.substring(2)
 endforeach
 
-mysql_libs_prefixed = run_command([mysql_config, '--libs']).stdout().split()
+mysql_libs_prefixed = run_command(mysql_config, '--libs', check: true).stdout().split()
 mysql_libs = []
 foreach i : mysql_libs_prefixed
   mysql_libs += i.substring(2)
