@@ -151,7 +151,7 @@ int pam_mysql_test_check_password(int method, char *actual, char *check) {
 
   const char* expected[] = {
   };
-  if (assert_expected_syslog_messages(prefix, expected, 1)) {
+  if (assert_expected_syslog_messages(prefix, expected, 0)) {
     dump_syslog_messages();
   }
   return result;
