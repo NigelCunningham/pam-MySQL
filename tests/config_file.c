@@ -198,8 +198,6 @@ int main(int argc, char **argv) {
 
   result = pam_mysql_read_config_file(&ctx, ctx.config_file);
   if (!result) {
-    pam_mysql_option_t* options = pam_mysql_get_options();
-    pam_mysql_option_t* option = pam_mysql_find_option(options, argv[2], strlen(argv[2]));
     result = pam_mysql_get_option(&ctx, &pretval, &to_release, argv[2], strlen(argv[2]));
     if (pretval && result != PAM_MYSQL_ERR_NO_ENTRY) {
       result = !!strcmp(pretval, argv[3]);
