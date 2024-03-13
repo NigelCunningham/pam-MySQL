@@ -3,7 +3,7 @@ project(
   'c',
   version: '0.9-alpha1',
   license: 'GPL v2',
-  meson_version: '>=0.53.0',
+  meson_version: '>=0.56.0',
   default_options: [
     'c_std=c11',
     'warning_level=2',
