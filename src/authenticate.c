@@ -77,7 +77,7 @@ pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 
   switch (mysql_num_rows(result)) {
     case 0:
-      pam_mysql_syslog(LOG_AUTHPRIV | LOG_ERR, "%s", "SELECT returned no result.");
+      pam_mysql_syslog(LOG_AUTHPRIV | LOG_DEBUG, "%s", "SELECT returned no result.");
       err = PAM_MYSQL_ERR_NO_ENTRY;
       goto out;
 
