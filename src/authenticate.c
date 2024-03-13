@@ -113,7 +113,7 @@ pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
       strcpy(encrypted_passwd, row[0]);
       err = plugin->encrypt(ctx, passwd, encrypted_passwd);
       if (ctx->verbose) {
-        fprintf(stderr, "'%s' v '%s' (<= '%s'). Error = %d.\n", row[0], encrypted_passwd, passwd, err);
+        pam_mysql_syslog(LOG_AUTHPRIV | LOG_DEBUG,"'%s' v '%s' (<= '%s'). Error = %d.\n", row[0], encrypted_passwd, passwd, err);
       }
       if (!err) {
         vresult = strcmp(row[0], encrypted_passwd);
