@@ -12,6 +12,7 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   // If we are using phpass
   if (!strncmp(encrypted, "$P$", 3))
   {
+    strcpy(encrypted, "");
     /*
     // Use PHPass's portable hashes with a cost of 10.
     $phpass = new \PasswordHash(10, true);
@@ -22,6 +23,7 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   // Check for Argon2id hashes
   else if (!strncmp(encrypted, "$argon2id", 9))
   {
+    strcpy(encrypted, "");
     /**
     // This implementation is not supported through any existing polyfills
     $match = password_verify($password, encrypted);
@@ -30,6 +32,7 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   // Check for Argon2i hashes
   else if (!strncmp(encrypted, "$argon2i", 8))
   {
+    strcpy(encrypted, "");
     /*
     // This implementation is not supported through any existing polyfills
     $match = password_verify($password, encrypted);
@@ -38,6 +41,7 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   // Check for bcrypt hashes
   else if (!strncmp(encrypted, "$2", 2))
   {
+    strcpy(encrypted, "");
     /**
     // \JCrypt::hasStrongPasswordSupport() includes a fallback for us in the worst case
     \JCrypt::hasStrongPasswordSupport();
@@ -46,6 +50,7 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   }
   else if (!strncmp(encrypted, "{SHA256}", 8))
   {
+    strcpy(encrypted, "");
     /**
     // Check the password
     $parts     = explode(':', encrypted);
