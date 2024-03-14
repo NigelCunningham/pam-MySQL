@@ -47,6 +47,7 @@ test_password_data_t test_password_data[] = {
   { 5, "$S$5FS2XtrzQh7m/lF9AR4c6u.Htxafz1S5COOZIWaKSFHVZ0ZYyPK0" },
   { 6, "6bf3889c770c47bc30110df5b371ac2c:FtzH9dNdQZYPvpn9RBp5JaVGUa6nlDvl" },
   { 6, "$2y$10$u0WSFSxkUxDU4eikH6aZBejx/lwAGazHZnRAksrLf/orUJwzbCQ9m" },
+  { 6, "{SHA256}5a2a00e58341e776e4b27917231db2ee741c20b1bb05c83cdf3bcc7f38f5831f:salt" },
   { 7, "TZgPw6HJaiWzaqkXgAyyyh2IoGhjNGVm" },
   { 8, "ee5f868a7d5194434d0a70c8464439848fc5f8b0719f3929877e05b62053edd6fca02171ce561da335632d6e3e59f1b47059cd2b83e940702eab3a3f4305185f" },
   { 9, "c6e8cefec7fea272e327c452c74cf7f6335193efb28dfb7063cf22b998fc6f9a" },
