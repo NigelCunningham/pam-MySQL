@@ -197,6 +197,7 @@ int main(int argc, char **argv) {
 	}
 	pwd++;
       }
+      xfree(passwords);
       fprintf(stderr, "Passed %d/%d passwords.\n", pwd - failed_any, pwd);
       // A successful password check returns 0. Anything else is a failure.
       // We return an error is we don't pass the expected success (succeed != 0) or we don't fail when we should (!fail).
