@@ -3,6 +3,8 @@
 #include "alloc.h"
 #include "md5.h"
 
+extern void pam_mysql_sha256_data(const char *d, unsigned int sz, char *md);
+
 pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const char *unencrypted, char *encrypted)
 {
   (void) ctx;

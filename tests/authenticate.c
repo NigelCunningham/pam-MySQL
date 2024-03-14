@@ -183,15 +183,24 @@ int main(int argc, char **argv) {
 
   for (long unsigned int i=0; i < pam_mysql_num_plugins(); i++) {
     pam_mysql_password_encryption_t *plugin = &pam_mysql_password_plugins[i];
+
     if (!strcmp(argv[1], plugin->name)) {
-      int succeed = pam_mysql_test_check_password(plugin->index, plugin->encrypted_password, "this is a passwd");
-      int fail = pam_mysql_test_check_password(plugin->index, plugin->encrypted_password, "wrong");
-      if (succeed || !fail) {
-        fprintf(stderr, "Success returned %d. Fail returned %d.\n", succeed, fail);
+      char **passwords = pam_mysql_password_plugin_test_passwords(i);
+      int pwd = 0;
+      int failed_any = 0;
+      while (passwords[pwd]) {
+	int succeed = pam_mysql_test_check_password(plugin->index, passwords[pwd], "this is a passwd");
+	int fail = pam_mysql_test_check_password(plugin->index, passwords[pwd], "wrong");
+	if (succeed || !fail) {
+	  fprintf(stderr, "Test for password '%s' fails.\n", passwords[pwd]);
+	  failed_any++;
+	}
+	pwd++;
       }
+      fprintf(stderr, "Passed %d/%d passwords.\n", pwd - failed_any, pwd);
       // A successful password check returns 0. Anything else is a failure.
       // We return an error is we don't pass the expected success (succeed != 0) or we don't fail when we should (!fail).
-      return succeed || !fail;
+      return failed_any;
     }
   }
 

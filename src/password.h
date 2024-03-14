@@ -11,10 +11,8 @@ typedef struct _pam_mysql_password_encryption_t {
   size_t encryption_size;
   pam_mysql_password_encrypt_t encrypt;
   pam_mysql_password_free_encrypted_t free;
-
-  /* The encrypted version of "this is a passwd", for testing. */
-  char *encrypted_password;
 } pam_mysql_password_encryption_t;
 
 extern pam_mysql_password_encryption_t pam_mysql_password_plugins[];
 extern long unsigned int pam_mysql_num_plugins(void);
+extern char **pam_mysql_password_plugin_test_passwords(int pluginid);
