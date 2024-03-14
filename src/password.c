@@ -26,7 +26,7 @@ pam_mysql_password_encryption_t pam_mysql_password_plugins[] = {
   {3, "md5", 33, pam_mysql_encrypt_password_md5, pam_mysql_free_encrypted_xallocd },
   {4, "sha1", 41, pam_mysql_encrypt_password_sha1, pam_mysql_free_encrypted_xallocd },
   {5, "drupal7", 128, pam_mysql_encrypt_password_drupal7, pam_mysql_free_encrypted_xallocd },
-  {6, "joomla15", 66, pam_mysql_encrypt_password_joomla15, pam_mysql_free_encrypted_xallocd },
+  {6, "joomla15", 0, pam_mysql_encrypt_password_joomla15, pam_mysql_free_encrypted_xallocd },
   {7, "ssha", 41, pam_mysql_encrypt_password_ssha, pam_mysql_free_encrypted_xallocd },
   {8, "sha512", 128, pam_mysql_encrypt_password_sha512, pam_mysql_free_encrypted_xallocd },
   {9, "sha256", 64, pam_mysql_encrypt_password_sha256, pam_mysql_free_encrypted_xallocd },
