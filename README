@@ -6,25 +6,18 @@ https://sourceforge.net/projects/pam-mysql/
 Now taken care of by Nigel Cunningham at
 https://github.com/NigelCunningham/pam-MySQL
 
-pam-MySQL 1.0.0-beta1
+pam-MySQL 1.0.0-beta3
 =====================
 
 This is the source code for pam-MySQL, released under the GPL v2 or later.
 
-This release is a huge refactor of the code, switching the build system to
+The 1.0 release is a huge refactor of the code, switching the build system to
 Meson and splitting the monolithic pam-mysql.c into a number of files so that I
-can begin to make it unit testable.
+can begin to make it unit testable, plus starting to implement those tests.
 
-I fully expect that a number of tweaks to the build scripts will be needed to
-support other environments aside from my ArchLinux system. I intend to test
-using VMs in the coming weeks, but will happily accept patches too.
-
-Although the substance of the code is the same as previously, I wouldn't yet
-recommend using this release in a production system. Let's bed it down first.
-
-Thanks and I hope this effort serves you well!
-
-Nigel Cunningham 26 April 2021
+Support in the Joomla space for SHA256 and bcrypt algorithms has been added in
+beta3. I'm not a Joomla user so would appreciate actual users confirming it all
+works as intended.
 
 SDG!
 
@@ -50,6 +43,7 @@ The 1.0 release of pam-MySQL has been tested with:
 - ArchLinux
 - Linux Mint 20.1
 - Centos 8
+- Rocky Linux 9
 
 
 OS Specific Instructions
