@@ -43,9 +43,7 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   // Check for bcrypt hashes
   else if (!strncmp(encrypted, "$2", 2))
   {
-    pam_mysql_syslog(LOG_AUTHPRIV | LOG_DEBUG, "Joomla bcrypt support (%s)", encrypted);
     char *result = crypt(unencrypted, encrypted);
-    pam_mysql_syslog(LOG_AUTHPRIV | LOG_DEBUG, "Fed (%s, %s), crypt returned %s", unencrypted, encrypted, result);
     strcpy(encrypted, result);
 
     /**
