@@ -99,10 +99,14 @@ pam_mysql_err_t pam_mysql_check_passwd(pam_mysql_ctx_t *ctx,
 
   vresult = -1;
 
-  if (row[0] && strlen(row[0])) {
-    if (passwd && strlen(passwd)) {
+  int row0len = row[0] ? strlen(row[0]) : 0;
+
+  if (row[0] && row0len) {
+    int passwdlen = passwd ? strlen(passwd) : 0;
+    if (passwd && passwdlen) {
       pam_mysql_password_encryption_t *plugin = &pam_mysql_password_plugins[ctx->crypt_type];
-      enc_size = plugin->encryption_size ? plugin->encryption_size : strlen(passwd + 1);
+      enc_size = plugin->encryption_size ? plugin->encryption_size :
+	(row0len > passwdlen) ? row0len : passwdlen;
       encrypted_passwd = xcalloc(enc_size, sizeof(char));
       if (!encrypted_passwd) {
         pam_mysql_syslog(LOG_AUTHPRIV | LOG_CRIT, "allocation failure at " __FILE__ ":%d", __LINE__);
