@@ -54,7 +54,59 @@ pam_mysql_err_t pam_mysql_encrypt_password_joomla15(pam_mysql_ctx_t *ctx, const 
   }
   else if (!strncmp(encrypted, "{SHA256}", 8))
   {
-    strcpy(encrypted, "");
+
+    int saltStart = 0, i, ln = strlen(encrypted);
+    char buf[255];
+
+    for (i = 1; i <= ln; i++) {
+      if (encrypted[i - 1] == ':' && !saltStart) {
+	saltStart = i;
+	break;
+      }
+    }
+
+    if (!saltStart) {
+      pam_mysql_syslog(LOG_AUTHPRIV | LOG_DEBUG, "No salt found.");
+      return PAM_MYSQL_ERR_INVAL;
+    }
+
+    // $encrypted = ($salt) ? hash('sha256', $plaintext . $salt) . ':' . $salt : hash('sha256', $plaintext);
+    // return ($showEncrypt) ? '{SHA256}' . $encrypted : '{SHA256}' . $encrypted;
+    if (ln - saltStart) {
+      char *salt = xcalloc(ln - saltStart + 1, sizeof(char));
+      strncpy(salt, &encrypted[saltStart], ln - saltStart + 1);
+      if (!salt) {
+        return PAM_MYSQL_ERR_ALLOC;
+      }
+
+      unsigned int inputLen = strlen(unencrypted) + ln - saltStart;
+      char *input = xcalloc(inputLen, sizeof(char));
+
+      if (!input) {
+	xfree(salt);
+        return PAM_MYSQL_ERR_ALLOC;
+      }
+
+      sprintf(input, "%s%s", unencrypted, salt);
+      pam_mysql_sha256_data(input, inputLen, buf);
+      int newLen = strlen(buf) + strlen(salt) + 9 > strlen(encrypted);
+      if (newLen) {
+        encrypted = xrealloc(encrypted, newLen, sizeof(char));
+        if (!encrypted) {
+          xfree(input);
+          xfree(salt);
+          return PAM_MYSQL_ERR_ALLOC;
+        }
+      }
+      sprintf(encrypted, "{SHA256}%s:%s", buf, salt);
+      xfree(salt);
+      xfree(input);
+    }
+    else {
+      pam_mysql_sha256_data(unencrypted, strlen(unencrypted), buf);
+      sprintf(encrypted, "{SHA256}%s", buf);
+    }
+
     /**
     // Check the password
     $parts     = explode(':', encrypted);
